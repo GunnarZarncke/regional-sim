@@ -3,8 +3,7 @@
 Mission and experimental discipline for **regional-sim**. Agent habits and
 layout: `AGENTS.md`. Front door: `README.md`.
 
-This is **one** simulation tool, not a family of experiment lines and not a
-book. Shared habits below are a cut-down of TSA `docs/METHODOLOGY.md`.
+This is **one** simulation tool, not a family of experiment lines. 
 
 ## Mission
 
@@ -74,6 +73,11 @@ fully insured retail customers; the latter generally did not run before those
 failures. A simulator that treats all depositors as equally likely to withdraw
 on rumor is not empirically grounded.
 
+**Scope refuse:** household balances are capped below the FDIC
+standard coverage limit, so the book has no uninsured or large-depositor run
+groups. Quantitative withdrawal rates and global markets/exchanges are not
+fitted. Record: [`regional_sim/docs/finance_scope.md`](regional_sim/docs/finance_scope.md).
+
 **Regulatory stress parameters are not observed micro-behavior.** Category B
 inputs (e.g. Basel 30-day liquidity horizons, supervisory stress assumptions)
 describe how institutions must plan or respond; they are not direct estimates
@@ -91,6 +95,12 @@ transactions according to modeled obligations and settlement rules.
 Record these checks in the world validation release. If a cross-domain effect
 appears only after AI policies are swapped in, the experiment would restate
 couplings that were never validated in the baseline world.
+
+**Current record (0.5.0-dev):** mechanism **direction** under `ScriptedPolicy`
+is checked for transport→freight, payments→declines, and power→retail
+(ablation). Magnitudes remain gaps. See
+[`regional_sim/docs/coupling_checks.md`](regional_sim/docs/coupling_checks.md)
+and `regional_sim/calibration/coupling_results.json`.
 
 #### 3. Release without requiring catastrophe
 

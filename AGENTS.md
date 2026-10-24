@@ -6,10 +6,6 @@ multidomain regional socioeconomic simulator. The scientific use is a
 personal AI policies can produce collective harm in an ordinary coupled
 world. That use must not leak into how the world is built.
 
-Sibling methodology (do not copy the book, Lean spine, or multi-line
-experiment farm):
-[towards-asi-alignment](https://github.com/GunnarZarncke/towards-asi-alignment)
-`AGENTS.md`, `experiments/README.md`, `docs/METHODOLOGY.md`.
 
 ## Agent behavior
 
@@ -108,5 +104,4 @@ scoring function are leaks.
 - **Do not commit unless the user asks.** Stage only what this task
   authorized.
 - Do not commit `.venv/`, secrets, or huge trace dumps unless asked.
-- Archived drops live under `versions/artifacts/`; do not treat any zip or dev
-  build as the frozen scientific release.
+- Archived drops live under `versions/artifacts/`

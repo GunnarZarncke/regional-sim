@@ -1,4 +1,4 @@
-# RegionalSim 0.4.0-dev — synthetic Columbus metropolitan prototype
+# RegionalSim 0.5.0-dev — synthetic Columbus metropolitan prototype
 
 An open-source, event-driven, six-domain regional socioeconomic simulation. **Research prototype with partial proxy calibration; not independently validated or operationally certified.** It does not infer death, illness severity, or any policy's desired outcome.
 
@@ -134,4 +134,13 @@ To reproduce the new 10,000-household road closure with trace records:
 
 ```bash
 regional-sim --households 10000 --days 3 --seed 47 --shock-json configs/road_closure_information.json --no-availability --sample-rate 0.002 --out output/road_closure
+```
+
+## Version 0.5.0-dev: scripted-human coupling checks
+
+Mechanism **direction** under the default scripted policy is recorded for freight under `road_closure`, electronic declines under a payments shock, and store closures under power with `power_to_retail` ablated. Magnitudes are gaps. Finance withdrawal rates and global markets are a documented scope refuse (`docs/finance_scope.md`, `docs/coupling_checks.md`). Fix I-5 / Sue Wing / AEP coefficients were not retuned.
+
+```bash
+python -m unittest tests.test_coupling -v
+python -m scripts.check_coupling
 ```

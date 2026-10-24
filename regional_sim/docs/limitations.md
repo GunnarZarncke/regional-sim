@@ -28,3 +28,7 @@ Relocation is now policy-owned with an individual survey-proxy preference thresh
 ## 0.4.0-dev travel-information calibration limits
 
 The new Fix I-5 48% departure-adjustment / 44% route-change marginals are respondent-level observed *closure behaviors*, not a randomized effect of a particular message. Applying them to first informed Columbus-synthetic commuters is a geographic/denominator transfer. Peer relocation plan routing is C-level; no quantified peer-induced decision to relocate. Road topology, parallel capacity, employer flexibility, alert reach and latency remain C-level. After additional communication events, the previous availability fit now differs by −1.25 percentage points at 24h and −0.31 at 336h (three seeds); see the regenerated `calibration/availability_results.json`. No medical outcomes have been added or evaluated.
+
+## 0.5.0-dev coupling checks and finance refuse
+
+Scripted-human coupling **direction** holds for transport→freight, payments→electronic declines, and power→retail closures (ablation). Magnitudes are **gaps**; see `docs/coupling_checks.md` and `calibration/coupling_results.json`. Quantitative depositor-run rates and global markets are a **scope refuse** (`docs/finance_scope.md`), not a missing metadata patch. Fix I-5, Sue Wing, and AEP parameters were not retuned.

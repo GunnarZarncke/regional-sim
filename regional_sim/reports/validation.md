@@ -1,4 +1,4 @@
-> Historical earlier-version validation report only. For v0.4.0-dev, read `reports/travel_information_validation.md` and rerun the tests.
+> Historical earlier-version validation report only. For v0.5.0-dev coupling, read `docs/coupling_checks.md` and `calibration/coupling_results.json`. For travel information, read `reports/travel_information_validation.md`. Rerun the tests.
 
 **Archive notice:** This document reports 0.1.0 results. They were NOT regenerated under 0.3.1-dev. Current participant-relocation tests and calibration checks are in `docs/participant_communication.md` and `calibration/availability_results.json`.
 
@@ -69,3 +69,7 @@ The historical 0.1.0 16-test / 49-entry counts above are retained as a snapshot,
 ## 0.3.0-dev operational availability supplement (2026-10-24)
 
 The historical reports above refer to their respective version snapshots and have not been silently reused as new-version experiment results. The new 25-test suite passes. `docs/operational_availability.md` and `calibration/availability_results.json` document a separately ablatable extension, 66 current provenance records, three-seed fit checks against *hypothetical* 2022 ComEd respondent choices, actual historical comparisons not fitted due to incompatible exposure/denominator, and unsupported long-run building and firm outcomes. There is no death/illness modeling or independent empirical validation of local behavior. Routine 10,000-household / four-day smoke run had zero unintended relocation and preserved accounting; a separate one-day complete blackout beginning at hour 24 generated 3,243 relocated and 3,243 returned units by end of day four, not a historical prediction.
+
+## 0.5.0-dev coupling supplement (2026-10-24)
+
+`python -m unittest discover -s tests -v` reported **Ran 48 tests in 1.764s** / **OK**. `python -m scripts.check_coupling` wrote `calibration/coupling_results.json` with `"transport_freight": true`, `"payments_settlement": true`, `"power_retail": true`, `"finance_and_markets": "scope_refuse"`. Magnitudes not calibrated. Regenerated `provenance.json` has **84** records. Do not freeze.

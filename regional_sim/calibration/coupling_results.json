@@ -1,0 +1,112 @@
+{
+  "status": "scripted-human mechanism checks; magnitudes not calibrated",
+  "n": 800,
+  "days": 3,
+  "seeds": [
+    47,
+    48,
+    49
+  ],
+  "availability_extension": false,
+  "transport_freight": {
+    "shock": {
+      "domain": "road_closure",
+      "multiplier": 0,
+      "at_hour": 2,
+      "duration_hours": 36
+    },
+    "runs": [
+      {
+        "seed": 47,
+        "routine_logistics_delays": 0,
+        "closure_logistics_delays": 1904
+      },
+      {
+        "seed": 48,
+        "routine_logistics_delays": 0,
+        "closure_logistics_delays": 1900
+      },
+      {
+        "seed": 49,
+        "routine_logistics_delays": 0,
+        "closure_logistics_delays": 1900
+      }
+    ],
+    "direction_holds": true,
+    "magnitude": "gap",
+    "note": "Freight uses the main corridor only; trucks cannot take the alternate route."
+  },
+  "payments_settlement": {
+    "shock": {
+      "domain": "payments",
+      "multiplier": 0,
+      "at_hour": 2,
+      "duration_hours": 24
+    },
+    "runs": [
+      {
+        "seed": 47,
+        "routine_declined": 0,
+        "shocked_declined": 1583,
+        "routine_settlement_retries": 0,
+        "shocked_settlement_retries": 0
+      },
+      {
+        "seed": 48,
+        "routine_declined": 0,
+        "shocked_declined": 1535,
+        "routine_settlement_retries": 0,
+        "shocked_settlement_retries": 0
+      },
+      {
+        "seed": 49,
+        "routine_declined": 0,
+        "shocked_declined": 1573,
+        "routine_settlement_retries": 0,
+        "shocked_settlement_retries": 0
+      }
+    ],
+    "direction_holds": true,
+    "magnitude": "gap",
+    "note": "Full-run declines can be zero if no electronic payment falls in the shock window; unit tests cover transfer()."
+  },
+  "power_retail": {
+    "shock": {
+      "domain": "power",
+      "multiplier": 0,
+      "at_hour": 2,
+      "duration_hours": 24
+    },
+    "ablation": "power_to_retail",
+    "runs": [
+      {
+        "seed": 47,
+        "closures": 154,
+        "ablation_closures": 0,
+        "spoiled": 42.9804,
+        "ablation_spoiled": 0.0
+      },
+      {
+        "seed": 48,
+        "closures": 108,
+        "ablation_closures": 0,
+        "spoiled": 42.9804,
+        "ablation_spoiled": 0.0
+      },
+      {
+        "seed": 49,
+        "closures": 118,
+        "ablation_closures": 0,
+        "spoiled": 42.9804,
+        "ablation_spoiled": 0.0
+      }
+    ],
+    "direction_holds": true,
+    "magnitude": "gap",
+    "spoilage_rate": "C-level 0.0006/hour after six unpowered hours; not fitted"
+  },
+  "finance_and_markets": {
+    "status": "scope_refuse",
+    "reason": "Household deposits capped below the FDIC standard coverage limit; no uninsured or large-depositor run groups; no global markets or exchanges."
+  }
+}

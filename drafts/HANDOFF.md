@@ -2,12 +2,14 @@
 
 ## Open work
 
-- Close gaps in `regional_sim/docs/calibration.md` vs **world freeze bar**
-  (`INSTRUCTIONS.md`): FDIC-style behavioral heterogeneity, independent domain
-  benchmarks, human-baseline coupling report.
-- Decide git commit for 0.2.0-dev tree + `versions/`.
+- Move household relocation onto the **policy API** (noted in
+  `docs/operational_availability.md`).
+- Close remaining **world freeze bar** gaps (`INSTRUCTIONS.md`) beyond 0.3.0-dev
+  survey anchors.
+- Commit 0.3.0-dev + `drafts/model-catastrophic-effects.md` when ready.
 
 ## Recently shipped
 
-- Replaced live `regional_sim/` with **0.2.0-dev** from calibrated zip; added
-  `versions/` (0.1.0 + 0.2.0-dev docs, artifacts under `versions/artifacts/`).
+- **0.3.0-dev** operational availability (replaces 0.2.0-dev live tree); version
+  doc and artifact under `versions/`.
+- Blinded review: `drafts/model-catastrophic-effects.md`.

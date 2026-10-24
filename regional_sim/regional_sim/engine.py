@@ -13,6 +13,7 @@ import numpy as np
 from .policy import Observation, MessageView, Action, ScriptedPolicy, Policy
 from .network import Multiplex
 from .scenarios import Shock, generate
+from .availability import SMB_SHUTDOWN_1D, relocation_trigger_hours
 
 @dataclass
 class Config:
@@ -29,6 +30,7 @@ class Config:
     extra_shocks: tuple[Shock, ...] = ()
     invariant_every_day: bool = True
     free_flow_minutes: float = 24.0  # calibratable local travel time; FHWA alpha/beta remain fixed
+    availability_extension: bool = True  # explicitly ablatable research extension
 
     def validate(self):
         if self.households < 1 or self.days < 1 or self.zones < 1 or self.retailers < 1:
@@ -179,6 +181,21 @@ class World:
         self.action_id = 0
         self.actions = {}
         self.actor_pending = defaultdict(set)
+        # Operational availability only. No mortality, illness, condemnation, destruction,
+        # bankruptcy or unrecorded housing production. Regional absence is NOT death.
+        self.household_local = np.ones(self.n, dtype=bool)
+        self.hh_outage_hours = np.zeros(self.n, dtype=np.int32)
+        self.hh_restored_hours = np.zeros(self.n, dtype=np.int32)
+        self.relocation_trigger_h = np.array([relocation_trigger_hours(float(x)) for x in r.uniform(1e-8, 1-1e-8, self.n)])
+        self.relocation_pending = np.zeros(self.n, dtype=bool)
+        self.return_pending = np.zeros(self.n, dtype=bool)
+        self.rel_location_absence_hours = 0
+        # Direct one-day 49% SMB stated shutdown intention, transferred to retailers
+        # as a C-level Bernoulli operational *workaround* proxy when site loses grid.
+        self.store_workaround = r.random(self.r) >= SMB_SHUTDOWN_1D
+        self.store_site_usable = np.ones(self.r, dtype=bool)
+        self.store_operational = np.ones(self.r, dtype=bool)
+        self.store_cumulative_closed_hours = np.zeros(self.r, dtype=np.int32)
         self.store_rank = r.random(self.r)
         self.store_outage_hours = np.zeros(self.r, dtype=float)
         self.last_commute_day = np.full(self.n, -1, dtype=np.int32)
@@ -234,6 +251,8 @@ class World:
         assert self.energy_served_kwh + self.energy_spilled_kwh <= self.generation_kwh + 1e-6
 
     def bank_access(self, a: int):
+        if a < self.n and not self.household_local[a]:
+            return bool(self.internet[a])  # C: outside-region ordinary connectivity boundary
         return self.comm_up[int(self.zone[a])] if a < self.n else self.comm_up[a % self.z]
 
     def transfer(self, sender: int, receiver: int, amount: int, label: str, method="electronic"):
@@ -344,10 +363,10 @@ class World:
         return None
 
     def comm_access(self, i):
-        return bool(self.comm_up[int(self.zone[i])] and self.internet[i])
+        return bool(self.internet[i] and (not self.household_local[i] or self.comm_up[int(self.zone[i])]))
 
     def shift_for(self, i: int, day: int) -> bool:
-        if not self.employed[i] or self.remote[i]:
+        if not self.household_local[i] or not self.employed[i] or self.remote[i]:
             return False
         if day % 7 < 5:
             return True
@@ -361,6 +380,7 @@ class World:
         active = tuple(sorted(self.actor_pending.get(i, ())))
         return Observation(
             participant=i, time=self.t, zone=zone, weekday=int(self.t / 24) % 7,
+            locally_present=bool(self.household_local[i]),
             household_size=int(self.hh_size[i]), employed=bool(self.employed[i]), remote_worker=bool(self.remote[i]),
             scheduled_shift=self.shift_for(i, int(self.t // 24)),
             balance_cents=int(self.balance[i]), cash_cents=int(self.cash[i]),
@@ -368,7 +388,8 @@ class World:
             grocery_need_daily=float(self.need[i]), medical_need_daily=float(self.med_need[i]),
             local_price_cents=int(self.store_price[shop]), medicine_price_cents=self.medicine_price_cents,
             shop_stock_report=self.stock_signal(i),
-            power_at_home=bool(self.power_rank[i] < self.power_ratio[zone]), comm_access=self.comm_access(i),
+            power_at_home=(bool(self.power_rank[i] < self.power_ratio[zone]) if self.household_local[i] else None),
+            comm_access=self.comm_access(i),
             services_report=None, last_stockout_hours_ago=(self.t - self.last_stockout[i]) if self.last_stockout[i] > -1e9 else None,
             last_purchase_hours_ago=(self.t - self.last_purchase[i]) if self.last_purchase[i] > -1e9 else None,
             clinic_pending=i in self.clinic_waiting,
@@ -425,8 +446,11 @@ class World:
             if valid:
                 zone = int(self.zone[i])
                 good = 0 if a.kind == "buy" else 1
-                departed = self.road_trip(zone, 1, "shop_arrival", (aid, i, float(a.amount), good))
-                if not departed:
+                if not self.household_local[i]:
+                    valid = False
+                else:
+                    departed = self.road_trip(zone, 1, "shop_arrival", (aid, i, float(a.amount), good))
+                if valid and not departed:
                     deferred = True
                     self.call(self.t + 1, "action_retry", aid)
         elif a.kind == "commute":
@@ -446,7 +470,7 @@ class World:
         elif a.kind == "send":
             zone = int(self.zone[i]); valid = self.comm_access(i)
             if a.payload == "power_interruption":
-                valid &= self.power_rank[i] >= self.power_ratio[zone]
+                valid &= bool(self.household_local[i]) and self.power_rank[i] >= self.power_ratio[zone]
             elif a.payload == "retail_stockout":
                 valid &= self.t - self.last_stockout[i] <= 24
             else:
@@ -474,7 +498,7 @@ class World:
             if valid:
                 self.send(i, m["claim"], m["evidence"], m["origin"], m["ttl"] + 1, "all")
         elif a.kind == "clinic":
-            valid = i not in self.clinic_waiting and self.t - self.last_clinic_visit[i] > 14 * 24
+            valid = bool(self.household_local[i]) and i not in self.clinic_waiting and self.t - self.last_clinic_visit[i] > 14 * 24
             if valid:
                 self.clinic_queue.append((i, self.t))
                 self.clinic_waiting.add(i)
@@ -540,7 +564,8 @@ class World:
 
     def deliver(self, item):
         mid, i, layer = item
-        channel_available = bool(self.comm_up[int(self.zone[i])] and (self.news_access[i] if layer == "news" else self.internet[i]))
+        channel_available = bool((not self.household_local[i] or self.comm_up[int(self.zone[i])]) and
+                                 (self.news_access[i] if layer == "news" else self.internet[i]))
         if not channel_available or self.rng.random() > float(self.attention[i]):
             self.stats["messages_not_received"] += 1
             return
@@ -586,6 +611,10 @@ class World:
     def shop_arrival(self, payload):
         aid, i, demand, good = payload
         store = int(self.store_of[i]); account = self.n + store; zone = int(self.store_zone[store])
+        if not self.household_local[i]:
+            self.trace.log(self.t, "action", i, id=aid, stage="failed", reason="outside_region")
+            self.complete(aid)
+            return
         if not 8 <= self.t % 24 < 22:
             self.stats["shop_outside_hours"] += 1
             self.trace.log(self.t, "retail", i, result="closed_hours", store=store)
@@ -597,7 +626,7 @@ class World:
             self.complete(aid)
             return
         if (self.rng.random() > min(1., self.factor_for("retail", zone)) or
-            ("power_to_retail" not in self.disabled and (self.power_ratio[zone] < .1 or self.store_rank[store] > self.power_ratio[zone]))):
+            ("power_to_retail" not in self.disabled and not (self.store_rank[store] < self.power_ratio[zone] or (self.cfg.availability_extension and self.store_workaround[store])))):
             # A closed shop cannot serve goods, though cash is available to the customer.
             self.stats["shop_power_closed"] += 1
             self.trace.log(self.t, "action", i, id=aid, stage="failed", reason="shop_power_closed")
@@ -637,6 +666,9 @@ class World:
 
     def commute_arrival(self, payload):
         aid, i, day = payload
+        if not self.household_local[i]:
+            self.complete(aid)
+            return
         employer = int(self.job[i])
         account = self.n + employer if employer < self.r else [self.wh, self.supplier, self.utility, self.clinic][employer - self.r]
         self.attended[account] += 1
@@ -772,6 +804,8 @@ class World:
         self.energy_served_kwh += served
         self.energy_spilled_kwh += max(0, supply - served)
         self.energy_unserved_kwh += max(0., float(demand.sum() - served))
+        if self.cfg.availability_extension:
+            self.availability_power_tick()
         # Refrigeration continuity: tiny explicitly accounted-for loss after sustained
         # store power failure. Rate and six-hour duration are C assumptions.
         if "power_to_retail" not in self.disabled:
@@ -801,6 +835,72 @@ class World:
                 self.announce(z, "power_interruption")
         self.call(self.t + 1, "power")
 
+    def availability_power_tick(self):
+        # A household's *own* supply status determines local relocation, not a global
+        # shock multiplier. Departure and return then require actual road capacity.
+        powered = self.power_rank < self.power_ratio[self.zone]
+        self.hh_outage_hours[:] = np.where(powered, 0, self.hh_outage_hours + 1)
+        self.hh_restored_hours[:] = np.where(powered, self.hh_restored_hours + 1, 0)
+        departures = np.flatnonzero(self.household_local & ~self.relocation_pending &
+                                    (self.hh_outage_hours >= self.relocation_trigger_h))
+        for i in departures:
+            self.relocation_pending[i] = True
+            self.call(self.t + self.rng.uniform(.1, 1.), "relocation_depart", int(i))
+            self.trace.log(self.t, "availability", int(i), category="person", transition="relocation_intended",
+                           outage_hours=int(self.hh_outage_hours[i]), target="outside_region")
+        # Six restored service hours before return is a C-level timing assumption.
+        returns = np.flatnonzero(~self.household_local & ~self.return_pending & (self.hh_restored_hours >= 6))
+        for i in returns:
+            self.return_pending[i] = True
+            self.call(self.t + self.rng.uniform(.1, 1.), "return_depart", int(i))
+        for store in range(self.r):
+            z = int(self.store_zone[store])
+            site = bool(self.store_rank[store] < self.power_ratio[z])
+            operating = site or bool(self.store_workaround[store])
+            if site != self.store_site_usable[store] or operating != self.store_operational[store]:
+                self.trace.log(self.t, "availability", -1, category="business_site", store=store,
+                               zone=z, grid_service=site, firm_operational=operating,
+                               workaround=bool(self.store_workaround[store]))
+            self.store_site_usable[store] = site
+            self.store_operational[store] = operating
+            self.store_cumulative_closed_hours[store] += int(not operating)
+
+    def relocation_depart(self, i):
+        if not self.household_local[i] or not self.relocation_pending[i]:
+            return
+        if self.hh_outage_hours[i] == 0:
+            self.relocation_pending[i] = False
+            return
+        if not self.road_trip(int(self.zone[i]), 1, "relocation_arrival", i):
+            self.stats["relocation_transport_deferred"] += 1
+            self.call(self.t + 1, "relocation_depart", i)
+
+    def relocation_arrival(self, i):
+        if self.household_local[i] and self.relocation_pending[i]:
+            self.household_local[i] = False
+            self.relocation_pending[i] = False
+            self.stats["relocation_completed"] += 1
+            self.trace.log(self.t, "availability", i, category="person", transition="outside_region",
+                           interpretation="temporarily absent from local modeled roles; no health outcome")
+
+    def return_depart(self, i):
+        if self.household_local[i] or not self.return_pending[i]:
+            return
+        if self.hh_restored_hours[i] < 6:
+            self.return_pending[i] = False
+            return
+        if not self.road_trip(int(self.zone[i]), 1, "return_arrival", i):
+            self.stats["return_transport_deferred"] += 1
+            self.call(self.t + 1, "return_depart", i)
+
+    def return_arrival(self, i):
+        if not self.household_local[i] and self.return_pending[i]:
+            self.household_local[i] = True
+            self.return_pending[i] = False
+            self.hh_outage_hours[i] = 0
+            self.stats["relocation_returned"] += 1
+            self.trace.log(self.t, "availability", i, category="person", transition="returned_local")
+
     def services(self):
         # Only continuity/capacity; no individual clinical outcomes are inferred.
         if "power_to_services" in self.disabled:
@@ -823,6 +923,9 @@ class World:
             available = min(max(0, self.clinic_capacity - self.clinic_used), int(self.goods[self.clinic, 1] / .2))
             for _ in range(min(available, len(self.clinic_queue))):
                 i, requested_at = self.clinic_queue.popleft()
+                if not self.household_local[i]:
+                    self.clinic_queue.append((i, requested_at))
+                    continue
                 self.clinic_waiting.discard(i)
                 self.last_clinic_visit[i] = self.t
                 self.clinic_used += 1
@@ -853,11 +956,18 @@ class World:
 
     def daily(self):
         needs = self.need.astype(np.float64) * np.array([self.factor_for("demand", z) for z in self.zone])
+        if self.cfg.availability_extension:
+            self.stats["outside_region_grocery_need_milli"] += int(round(float(needs[~self.household_local].sum()) * 1000))
+            needs[~self.household_local] = 0.  # outside-region requirements not claimed supplied
+            self.rel_location_absence_hours += int((~self.household_local).sum()) * 24
         used = np.minimum(self.goods[:self.n, 0], needs)
         self.goods[:self.n, 0] -= used
         self.consumed[0] += used.sum()
         self.stats["unmet_grocery_milli"] += int(round(float((needs - used).sum()) * 1000))
         med = self.med_need.astype(np.float64)
+        if self.cfg.availability_extension:
+            self.stats["outside_region_medicine_need_milli"] += int(round(float(med[~self.household_local].sum()) * 1000))
+            med[~self.household_local] = 0.
         meds_used = np.minimum(self.goods[:self.n, 1], med)
         self.goods[:self.n, 1] -= meds_used
         self.consumed[1] += meds_used.sum()
@@ -914,6 +1024,16 @@ class World:
                     unmet_grocery_units=float(self.stats["unmet_grocery_milli"] / 1000),
                     unmet_medicine_units=float(self.stats["unmet_medicine_milli"] / 1000),
                     payment_failures=int(self.stats["payment_failed"]),
+                    people_locally_present=int(self.household_local.sum()),
+                    people_temporarily_away=int((~self.household_local).sum()),
+                    relocation_completed=int(self.stats["relocation_completed"]),
+                    relocation_returned=int(self.stats["relocation_returned"]),
+                    relocation_transport_deferred=int(self.stats["relocation_transport_deferred"]),
+                    outside_region_grocery_requirement_units=float(self.stats["outside_region_grocery_need_milli"] / 1000),
+                    outside_region_medicine_requirement_units=float(self.stats["outside_region_medicine_need_milli"] / 1000),
+                    normal_grid_site_access=int(self.store_site_usable.sum()),
+                    firms_power_operable=int(self.store_operational.sum()),
+                    firm_power_closed_hours=int(self.store_cumulative_closed_hours.sum()),
                     shop_power_closures=int(self.stats["shop_power_closed"]),
                     shop_understaffed=int(self.stats["shop_understaffed"]),
                     unpaid_payroll=int(self.stats["unpaid_payroll"]))
@@ -936,14 +1056,14 @@ class World:
                 elif kind == "action_retry":
                     if payload in self.actions:
                         i, a, stage = self.actions[payload]
-                        if stage == "deferred" and a.kind in {"buy", "buy_medicine"}:
+                        if stage == "deferred" and a.kind in {"buy", "buy_medicine"} and self.household_local[i]:
                             if not self.road_trip(int(self.zone[i]), 1, "shop_arrival", (payload, i, float(a.amount), 0 if a.kind == "buy" else 1)):
                                 self.call(self.t + 1, "action_retry", payload)
                             else:
                                 self.actions[payload] = (i, a, "executed")
                 elif kind == "commute_retry":
                     aid, i, day = payload
-                    if aid in self.actions and self.actions[aid][2] == "deferred" and int(self.t // 24) == day:
+                    if aid in self.actions and self.actions[aid][2] == "deferred" and int(self.t // 24) == day and self.household_local[i]:
                         if self.road_trip(int(self.zone[i]), 1, "commute_arrival", (aid, i, day)):
                             self.actions[aid] = (i, self.actions[aid][1], "executed")
                             self.last_commute_day[i] = day
@@ -951,6 +1071,10 @@ class World:
                             self.call(self.t + 1, "commute_retry", payload)
                 elif kind == "shop_arrival": self.shop_arrival(payload)
                 elif kind == "commute_arrival": self.commute_arrival(payload)
+                elif kind == "relocation_depart": self.relocation_depart(payload)
+                elif kind == "relocation_arrival": self.relocation_arrival(payload)
+                elif kind == "return_depart": self.return_depart(payload)
+                elif kind == "return_arrival": self.return_arrival(payload)
                 elif kind == "settle": self.settle(payload)
                 elif kind == "send": raise RuntimeError("send only through policy or authentic announcements")
                 elif kind == "deliver": self.deliver(payload)

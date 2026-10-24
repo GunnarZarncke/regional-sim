@@ -1,4 +1,4 @@
-# RegionalSim 0.2.0-dev — synthetic Columbus metropolitan prototype
+# RegionalSim 0.3.0-dev — synthetic Columbus metropolitan prototype
 
 An open-source, event-driven, six-domain regional socioeconomic simulation. **Research prototype with partial proxy calibration; not independently validated or operationally certified.** It does not infer death, illness severity, or any policy's desired outcome.
 
@@ -50,7 +50,7 @@ print(w.run())
 
 Policy code receives only frozen participant observations (with personal balances/inventory, on-site observations, access-gated requested data, received messages and pending request IDs) and an RNG. The engine owns all account balances, inventory, transport reservations, message routing and the event queue. Policies may emit **lists of ordinary actions**, including `buy`, `buy_medicine`, `commute`, `pay_bill`, `clinic`, `query`, `send`, `forward`, `ask`, `agree`, `disagree`, `intended_message`, `completed_message`, `schedule`, `cancel`, or `none`. The world validates claims, eligibility, capacity, ownership, information access and transaction feasibility. Future comparison-policy objectives do not exist in the model.
 
-See `docs/technical.md` for all action semantics, conservation equations and domain couplings; `provenance.json` for 56 parameter/source records; `docs/limitations.md` for failures and gaps; `reports/validation.md` for actual measurements. Run `python scripts/validate.py` to generate paired-seed comparison outputs and domain shock smoke checks.
+See `docs/technical.md` for all action semantics, conservation equations and domain couplings; `provenance.json` for 66 parameter/source records; `docs/limitations.md` for failures and gaps; `reports/validation.md` for actual measurements. Run `python scripts/validate.py` to generate paired-seed comparison outputs and domain shock smoke checks.
 
 ## Status
 
@@ -71,3 +71,14 @@ regional-sim --config configs/calibrated_2024.json --out output/calibrated_contr
 It fits a configurable BPR free-flow time to a 2024 Columbus ACS commute-time **proxy** and two *external* supply multipliers to approximate June 2022 AEP outage-count **proxies**, not to a physical circuit reconstruction. Source observations and explicit comparability limits are in `benchmarks/observations.json`; trials, seed checks and measured paired outcomes are in `calibration/results.json`; interpretations and missing independent validation are in `docs/calibration.md`. Three new regression tests cover precise shock-tick ordering, outage boundedness and free-flow sensitivity. The provenance generator now produces **56** entries, including observed benchmarks and separately flagged inverse-fitted C-level quantities. The archived 0.1.0 report's statement of 16 tests / 49 parameters describes the older snapshot, not this supplement.
 
 The new `--free-flow-minutes` flag (`Config.free_flow_minutes`) defaults to the legacy 24 minutes; the calibrated configuration sets about 23.7693. The `power_unserved_households_*` counters describe a fixed-rank *scalar service proxy*, **not an engineered feeder/customer outage circuit model**. Externally scheduled restoration remains an input. Never use the two fitted points as evidence of independent shock-response validation.
+
+## Optional reversible operational availability (0.3.0-dev)
+
+Operational absence/closure is not mortality, serious illness, structural damage or automatic bankruptcy. A provisional evidence-linked **stated-response** fit represents households' temporary relocation under actual local grid loss, and store-site normal grid availability separately from synthetic retailer operating workarounds. Temporary relocation consumes road capacity; absent households cannot perform local work, shopping or clinic visits, but are retained in the population and outside-region food/medicine requirements are logged as **unresolved boundary needs**, not assumed fulfilled. The extension is on by default; `--no-availability` disables it.
+
+```bash
+python -m scripts.validate_availability
+regional-sim --config configs/development.json --no-availability --out output/ablation
+```
+
+See [docs/operational_availability.md](docs/operational_availability.md), `benchmarks/availability_observations.json` and `calibration/availability_results.json` for fitted survey endpoints, actual blackout and hurricane comparators *not* fitted, three-seed checks and all gaps. These are **not independently historically validated**; physical buildings have no damage or safety state. Prior example output folders and `calibration/results.json` were generated with the earlier 0.2.0-dev version; re-run them to compare model versions.

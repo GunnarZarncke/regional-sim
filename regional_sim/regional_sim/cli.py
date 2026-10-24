@@ -22,6 +22,7 @@ def main(argv=None):
     p.add_argument("--full-trace", action="store_true")
     p.add_argument("--sample-rate", type=float, default=.02)
     p.add_argument("--free-flow-minutes", type=float, default=24.0)
+    p.add_argument("--no-availability", action="store_true", help="Ablate the provisional operational availability extension")
     p.add_argument("--shock-json", help="JSON file containing an array of shock objects")
     p.add_argument("--disable-coupling", action="append", default=[])
     p.set_defaults(**defaults)
@@ -36,7 +37,7 @@ def main(argv=None):
                  zones=args.zones, retailers=args.retailers,
                  trace=str(out / "traces.ndjson"), full_trace=args.full_trace, sample_rate=args.sample_rate,
                  disable_coupling=tuple(args.disable_coupling), extra_shocks=shocks,
-                 free_flow_minutes=args.free_flow_minutes)
+                 free_flow_minutes=args.free_flow_minutes, availability_extension=not args.no_availability)
     sim = World(cfg)
     result = sim.run()
     sim.write_metrics(out / "daily.csv")

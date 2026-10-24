@@ -131,6 +131,7 @@ class ModelTests(unittest.TestCase):
             w.t = 12
             w.attended[w.n:w.wh] = 999
             w.power_ratio[:] = 0.
+            w.store_workaround[:] = False
             w.shop_arrival((None, 0, 1., 0))
         self.assertEqual(a.stats['shop_power_closed'], 1)
         self.assertEqual(b.stats['shop_power_closed'], 0)
@@ -203,3 +204,63 @@ class CalibrationMechanismTests(unittest.TestCase):
         s=w.run()
         self.assertTrue(0<=s['power_unserved_households_peak']<=w.n)
         self.assertEqual(s['power_unserved_households_last'],0)
+
+class AvailabilityExtensionTests(unittest.TestCase):
+    def test_stated_response_curve_exact_fit(self):
+        from regional_sim.availability import relocation_probability, relocation_trigger_hours
+        self.assertAlmostEqual(relocation_probability(24), .33, places=12)
+        self.assertAlmostEqual(relocation_probability(14 * 24), .83, places=12)
+        for u in (.02, .33, .7, .82):
+            self.assertAlmostEqual(relocation_probability(relocation_trigger_hours(u)), u, places=10)
+        self.assertTrue(math.isinf(relocation_trigger_hours(.9)))
+
+    def test_power_loss_makes_site_unavailable_without_damage(self):
+        w = world(n=1200, days=2)
+        w.shock(Shock(0., 'power', -1, 0., 24.))
+        w.power()
+        self.assertEqual(w.store_site_usable.sum(), 0)
+        self.assertEqual(w.store_operational.sum(), w.store_workaround.sum())
+        self.assertEqual(w.goods_total()[0], w.goods_initial[0])
+        w.invariants(); w.trace.close()
+
+    def test_relocation_is_reversible_and_consumes_roads(self):
+        w = world(n=1200, days=4, extra_shocks=(Shock(0., 'power', -1, 0., 48.),))
+        s = w.run()
+        self.assertGreater(s['relocation_completed'], 0)
+        self.assertEqual(s['people_temporarily_away'], 0)
+        self.assertEqual(s['relocation_completed'], s['relocation_returned'])
+        self.assertGreater(s['outside_region_grocery_requirement_units'], 0)
+        w.invariants()
+
+    def test_away_household_cannot_complete_local_shopping(self):
+        w = world(n=480)
+        w.t = 12.
+        w.household_local[0] = False
+        w.attended[w.n] = 999
+        stock = w.goods[0, 0]
+        w.shop_arrival((None, 0, 1., 0))
+        self.assertEqual(w.goods[0, 0], stock)
+        self.assertFalse(w.shift_for(0, 0))
+        w.invariants(); w.trace.close()
+
+    def test_availability_extension_can_be_ablated(self):
+        a = world(n=480, days=2, extra_shocks=(Shock(0.,'power',-1,0.,24.),))
+        b = world(n=480, days=2, availability_extension=False,
+                  extra_shocks=(Shock(0.,'power',-1,0.,24.),))
+        a.run(); b.run()
+        self.assertGreater(a.stats['relocation_completed'], 0)
+        self.assertEqual(b.stats['relocation_completed'], 0)
+        self.assertEqual(b.snapshot()['people_temporarily_away'], 0)
+
+class OperationalDependencyTests(unittest.TestCase):
+    def test_road_shutdown_blocks_departure_without_disappearing_people(self):
+        power = (Shock(0., 'power', -1, 0., 24.),)
+        a = world(n=1200, days=3, retailers=60, extra_shocks=power)
+        b = world(n=1200, days=3, retailers=60,
+                  extra_shocks=power + (Shock(0., 'road', -1, 0., 24.),))
+        s1, s2 = a.run(), b.run()
+        self.assertGreater(s1['relocation_completed'], 0)
+        self.assertEqual(s2['relocation_completed'], 0)
+        self.assertGreater(s2['relocation_transport_deferred'], 0)
+        self.assertEqual(s2['people_locally_present'], 1200)
+        a.invariants(); b.invariants()

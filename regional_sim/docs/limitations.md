@@ -17,3 +17,6 @@ This is executable **prototype software**, not the validated scientific release 
 ## 0.2.0-dev partial calibration supplement
 
 See `docs/calibration.md`. Only ACS travel duration (metric-incompatible commuter vs all-trip proxy) and a June 2022 AEP two-point outage-count (all-account vs 2024 CBSA household-denominator proxy) have been numerically fitted. Fitted exogenous capacity factors cannot identify actual damaged transmission capacity, controlled circuit switching, spatial outage allocation, restoration effort, or cross-domain damage. Simulated post-outage food losses and messaging are **unvalidated**, not reported historical effect-size matches. No independent per-domain heldout disturbance response is demonstrated. Preset random severe-shock distributions, all legacy C-level behavioral parameters and financial/health/retail mechanisms remain uncalibrated.
+
+## 0.3.0-dev availability extension
+See `docs/operational_availability.md`. Actual historical responses are not equated with survey choices, property functionality with structural safety, or temporary absence with death. C-level assumptions include elapsed-time interpolation, outside-region resource boundary, return timing, SMB-to-retail transfer and unmodeled adaptation after day one. Do not interpret long-run firm closure or residence habitability using this extension.

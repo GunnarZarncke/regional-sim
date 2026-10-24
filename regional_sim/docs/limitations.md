@@ -24,3 +24,7 @@ See `docs/operational_availability.md`. Actual historical responses are not equa
 ## 0.3.1-dev participant policy and communications
 
 Relocation is now policy-owned with an individual survey-proxy preference threshold; no policy request means no move. Simulated messages can change the baseline grocery target following independent stockout reports, but **there is no calibrated communication effect on relocation**. Both the 2.5-to-4-day response and most network contact/trust/attention/propagation rates are C-level assumptions. Stated blackout response scenarios also communicate an expected restoration horizon, unlike the script which acts on elapsed observed outage; this is a transfer limitation. Outside-region resources and realistic return decisions remain outside the modeled boundary.
+
+## 0.4.0-dev travel-information calibration limits
+
+The new Fix I-5 48% departure-adjustment / 44% route-change marginals are respondent-level observed *closure behaviors*, not a randomized effect of a particular message. Applying them to first informed Columbus-synthetic commuters is a geographic/denominator transfer. Peer relocation plan routing is C-level; no quantified peer-induced decision to relocate. Road topology, parallel capacity, employer flexibility, alert reach and latency remain C-level. After additional communication events, the previous availability fit now differs by −1.25 percentage points at 24h and −0.31 at 336h (three seeds); see the regenerated `calibration/availability_results.json`. No medical outcomes have been added or evaluated.

@@ -2,7 +2,7 @@
 from dataclasses import dataclass, asdict
 import random
 
-DOMAINS = ("power", "road", "communication", "supply", "payments", "demand", "retail", "services")
+DOMAINS = ("power", "road", "road_closure", "communication", "supply", "payments", "demand", "retail", "services")
 
 @dataclass(frozen=True)
 class Shock:
@@ -26,7 +26,7 @@ def generate(kind: str, days: int, zones: int, seed: int) -> list[Shock]:
     if kind in ("routine", "seasonal") or days < 2:
         return []
     # Ranges and event probabilities are C-level placeholders: not empirical hazard distributions.
-    domain = rng.choice(DOMAINS)
+    domain = rng.choice(tuple(d for d in DOMAINS if d != "road_closure"))
     zone = rng.randrange(zones) if rng.random() < .7 else -1
     at = rng.uniform(12, max(13, 24 * days * .6))
     if kind == "moderate":

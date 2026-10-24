@@ -177,7 +177,17 @@ class World:
         self.last_purchase = np.full(self.n, -1e10)
         self.last_purchase_intention = np.full(self.n, -1e10)
         self.adopted = np.zeros(self.n, dtype=bool)
-        self.last_notice = np.full(self.z, -1e10)
+        self.last_notice = {}  # (zone, claim) -> time; distinct power/road/reopening notices
+        self.road_alert_until = np.full(self.n, -1e10)
+        self.road_alert_source = np.full(self.n, "", dtype="<U12")
+        self.last_road_delay = np.full(self.n, -1e10)
+        self.information_review_at = np.full(self.n, -1e10)
+        self.peer_relocation_until = np.full(self.n, -1e10)
+        self.peer_relocation_route = np.full(self.n, "", dtype="<U12")
+        # Transferred observed *closure-response* marginals (Fix I-5, 2008);
+        # not an estimated causal effect of message exposure, nor joint distribution.
+        self.pref_route_change = r.random(self.n) < .44
+        self.pref_time_shift = r.random(self.n) < .48
         self.action_id = 0
         self.actions = {}
         self.actor_pending = defaultdict(set)
@@ -187,6 +197,8 @@ class World:
         self.hh_outage_hours = np.zeros(self.n, dtype=np.int32)
         self.hh_restored_hours = np.zeros(self.n, dtype=np.int32)
         self.relocation_trigger_h = np.array([relocation_trigger_hours(float(x)) for x in r.uniform(1e-8, 1-1e-8, self.n)])
+        self.last_relocation_intention = np.full(self.n, -1e10)
+        self.last_relocation_route = np.full(self.n, "main", dtype="<U12")
         self.relocation_pending = np.zeros(self.n, dtype=bool)
         self.return_pending = np.zeros(self.n, dtype=bool)
         self.availability_review_pending = np.zeros(self.n, dtype=bool)
@@ -202,6 +214,9 @@ class World:
         self.store_rank = r.random(self.r)
         self.store_outage_hours = np.zeros(self.r, dtype=float)
         self.last_commute_day = np.full(self.n, -1, dtype=np.int32)
+        self.commute_action_id = np.full(self.n, -1, dtype=np.int64)
+        self.commute_first_choice_day = np.full(self.n, -1, dtype=np.int32)
+        self.commute_informed_seen = np.zeros(self.n, dtype=bool)
         self.cumulative_observed = 0
         self.cumulative_reinforced = 0
         self.distinct_reached = set()
@@ -330,33 +345,45 @@ class World:
         self.pending.pop(tx)
         self.trace.log(self.t, "transaction", sender, tx=tx, receiver=receiver, cents=amount, stage="settled", label=label)
 
-    def road_trip(self, zone: int, units: int, purpose: str, payload: Any) -> bool:
-        if "power_to_mobility" in self.disabled:  # no effect by default; explicit negative-control flag
-            pass
+    def road_trip(self, zone: int, units: int, purpose: str, payload: Any, route="main") -> bool:
+        if route not in {"main", "alternate"}:
+            return False
         hour = int(self.t)
-        road_availability = self.factor_for("road", zone)
-        cap = max(6, int((self.n / self.z) * .42 * road_availability)) if road_availability > 0 else 0
+        regional = self.factor_for("road", zone)
+        corridor = self.factor_for("road_closure", zone) if route == "main" else 1.
+        availability = regional * corridor
+        baseline = max(6, int((self.n / self.z) * .42))
+        # C-level parallel path proxy, separate capacity/occupancy; a full road
+        # shock still affects both routes and zero capacity prevents all movement.
+        base_cap = baseline if route == "main" else max(1, int(.35 * baseline))
+        cap = max(1, int(base_cap * availability)) if availability > 0 else 0
         if cap == 0:
             self.stats["travel_capacity_rejections"] += units
+            self.trace.log(self.t, "mobility", -1, result="blocked", zone=zone,
+                           route=route, purpose=purpose, vehicles=units)
             return False
-        used = self.road_used[(hour, zone)]
+        key = lambda h: (h, zone) if route == "main" else (h, zone, "alternate")
+        used = self.road_used[key(hour)]
         if used + units > cap:
             self.stats["travel_capacity_rejections"] += units
-            self.trace.log(self.t, "mobility", -1, result="deferred", zone=zone, purpose=purpose, vehicles=units)
+            self.trace.log(self.t, "mobility", -1, result="deferred", zone=zone,
+                           route=route, purpose=purpose, vehicles=units)
             return False
         ratio = (used + units) / cap
-        travel = (self.cfg.free_flow_minutes / 60.) * (1 + .15 * ratio ** 4)   # FHWA BPR: alpha=.15, beta=4
+        free_flow = (self.cfg.free_flow_minutes / 60.) * (1.35 if route == "alternate" else 1.)
+        travel = free_flow * (1 + .15 * ratio ** 4)
         duration = max(1, math.ceil(travel))
         for h in range(hour, hour + duration):
-            if self.road_used[(h, zone)] + units > cap:
+            if self.road_used[key(h)] + units > cap:
                 return False
         for h in range(hour, hour + duration):
-            self.road_used[(h, zone)] += units
+            self.road_used[key(h)] += units
         self.stats["vehicle_trips"] += units
         self.stats["travel_minutes_total"] += int(round(units * travel * 60))
+        self.stats["alternate_route_trips" if route == "alternate" else "main_route_trips"] += units
         self.call(self.t + travel, purpose, payload)
-        self.trace.log(self.t, "mobility", -1, result="departed", zone=zone, purpose=purpose,
-                       vehicles=units, duration_hours=round(travel, 4))
+        self.trace.log(self.t, "mobility", -1, result="departed", zone=zone,
+                       route=route, purpose=purpose, vehicles=units, duration_hours=round(travel, 4))
         return True
 
     def stock_signal(self, i):
@@ -369,7 +396,7 @@ class World:
         return bool(self.internet[i] and (not self.household_local[i] or self.comm_up[int(self.zone[i])]))
 
     def shift_for(self, i: int, day: int) -> bool:
-        if not self.household_local[i] or not self.employed[i] or self.remote[i]:
+        if self.last_commute_day[i] == day or not self.household_local[i] or not self.employed[i] or self.remote[i]:
             return False
         if day % 7 < 5:
             return True
@@ -385,7 +412,12 @@ class World:
                                        (int(self.return_action_id[i]), self.return_pending[i])):
             if move_pending and move_aid in self.actions:
                 active_ids.add(move_aid)
+        commute_aid = int(self.commute_action_id[i])
+        if commute_aid in self.actions:
+            active_ids.add(commute_aid)
         active = tuple(sorted(active_ids))
+        relocation_action = self.actions.get(int(self.relocation_action_id[i]))
+        return_action = self.actions.get(int(self.return_action_id[i]))
         return Observation(
             participant=i, time=self.t, zone=zone, weekday=int(self.t / 24) % 7,
             locally_present=bool(self.household_local[i]),
@@ -405,6 +437,10 @@ class World:
             return_pending=bool(self.return_pending[i]),
             relocation_request_id=(int(self.relocation_action_id[i]) if self.relocation_pending[i] else None),
             return_request_id=(int(self.return_action_id[i]) if self.return_pending[i] else None),
+            relocation_request_stage=(relocation_action[2] if relocation_action else ""),
+            relocation_request_route=("alternate" if relocation_action and relocation_action[1].target == 1 else "main"),
+            return_request_stage=(return_action[2] if return_action else ""),
+            return_request_route=("alternate" if return_action and return_action[1].target == 1 else "main"),
             availability_review_pending=bool(self.availability_review_pending[i]),
             comm_access=self.comm_access(i),
             services_report=None, last_stockout_hours_ago=(self.t - self.last_stockout[i]) if self.last_stockout[i] > -1e9 else None,
@@ -415,7 +451,16 @@ class World:
             pending_action_ids=active,
             pending_grocery_purchase=any(self.actions[aid][1].kind == "buy" for aid in active if aid in self.actions),
             pending_medicine_purchase=any(self.actions[aid][1].kind == "buy_medicine" for aid in active if aid in self.actions),
-            trust=float(self.trust[i]), adoption_threshold=int(self.threshold[i]))
+            trust=float(self.trust[i]), adoption_threshold=int(self.threshold[i]),
+            road_alert=bool(self.road_alert_until[i] >= self.t),
+            road_alert_source=(str(self.road_alert_source[i]) if self.road_alert_until[i] >= self.t else ""),
+            last_road_delay_hours_ago=(self.t - self.last_road_delay[i] if self.last_road_delay[i] > -1e9 else None),
+            commute_route_preference=bool(self.pref_route_change[i]),
+            commute_time_preference=bool(self.pref_time_shift[i]),
+            pending_commute=any(self.actions[aid][1].kind == "commute" for aid in active if aid in self.actions),
+            pending_commute_request_id=(commute_aid if commute_aid in self.actions else None),
+            pending_commute_route=(self.actions[commute_aid][1].payload if commute_aid in self.actions else ""),
+            peer_relocation_route=(str(self.peer_relocation_route[i]) if self.peer_relocation_until[i] >= self.t else ""))
 
     def decide(self, i: int):
         o = self.obs(i)
@@ -435,6 +480,26 @@ class World:
             aid = self.action_id
             self.actions[aid] = (i, action, "requested")
             self.actor_pending[i].add(aid)
+            if (action.kind == "relocate" and action.target == 1 and
+                    o.peer_relocation_route == "alternate" and not o.commute_route_preference):
+                self.stats["peer_coordinated_route_requests"] += 1
+            if action.kind == "relocate":
+                self.last_relocation_intention[i] = self.t
+                self.last_relocation_route[i] = "alternate" if action.target == 1 else "main"
+            if action.kind == "commute":
+                self.commute_action_id[i] = aid
+            if action.kind == "commute" and self.commute_first_choice_day[i] != int(self.t // 24):
+                self.commute_first_choice_day[i] = int(self.t // 24)
+                self.stats["commute_first_choices"] += 1
+                if o.road_alert and o.road_alert_source != "firsthand" and not self.commute_informed_seen[i]:
+                    self.commute_informed_seen[i] = True
+                    self.stats["message_informed_first_commute_choices"] += 1
+                    self.stats["message_informed_first_route_choices"] += int(action.payload == "alternate")
+                    self.stats["message_informed_first_shift_choices"] += int(action.delay_hours >= 2.5)
+            if action.kind == "commute" and o.road_alert:
+                self.stats["informed_commute_requests"] += 1
+                if action.payload == "alternate": self.stats["informed_route_choices"] += 1
+                if action.delay_hours >= 2.5: self.stats["informed_shift_choices"] += 1
             if action.kind == "buy":
                 self.last_purchase_intention[i] = self.t
             if action.kind == "review" and self.cfg.availability_extension:
@@ -476,10 +541,15 @@ class World:
             day = int(self.t // 24)
             valid = bool(self.shift_for(i, day) and self.last_commute_day[i] != day)
             if valid:
-                departed = self.road_trip(int(self.zone[i]), 1, "commute_arrival", (aid, i, day))
+                route = a.payload if a.payload in {"main", "alternate"} else "main"
+                departed = self.road_trip(int(self.zone[i]), 1, "commute_arrival", (aid, i, day), route=route)
                 if departed:
                     self.last_commute_day[i] = day
                 else:
+                    self.last_road_delay[i] = self.t  # personal failed departure, not inferred closure
+                    self.road_alert_until[i] = max(self.road_alert_until[i], self.t + 4)
+                    self.road_alert_source[i] = "firsthand"
+                    self.call(self.t + .1, "information_review", i)
                     deferred = True
                     self.call(self.t + 1, "commute_retry", (aid, i, day))
         elif a.kind == "query":
@@ -492,10 +562,12 @@ class World:
                 valid &= bool(self.household_local[i]) and self.power_rank[i] >= self.power_ratio[zone]
             elif a.payload == "retail_stockout":
                 valid &= self.t - self.last_stockout[i] <= 24
+            elif a.payload == "road_delay":
+                valid &= self.t - self.last_road_delay[i] <= 4
             else:
                 valid = False
             if valid:
-                self.send(i, a.payload, "firsthand", i, 0, "all")
+                self.send(i, f"road_delay:{zone}" if a.payload == "road_delay" else a.payload, "firsthand", i, 0, "all")
         elif a.kind in {"ask", "agree", "disagree", "intended_message", "completed_message"}:
             valid = self.comm_access(i)
             if a.kind == "ask":
@@ -506,8 +578,13 @@ class World:
                 valid &= bool(mref and i in mref["recipients"])
                 if valid: self.send(i, "stance:" + mref["claim"], "opinion", i, 0, "all")
             elif a.kind == "intended_message":
-                valid &= a.payload == "buy" and self.t - self.last_purchase_intention[i] <= 6
-                if valid: self.send(i, "intended_purchase", "firsthand_intention", i, 0, "all")
+                if a.payload == "relocate":
+                    valid &= 0 <= self.t - self.last_relocation_intention[i] <= 6
+                    route = str(self.last_relocation_route[i])
+                    if valid: self.send(i, f"relocation_intent:{int(self.zone[i])}:{route}", "firsthand_intention", i, 0, "all")
+                else:
+                    valid &= a.payload == "buy" and self.t - self.last_purchase_intention[i] <= 6
+                    if valid: self.send(i, "intended_purchase", "firsthand_intention", i, 0, "all")
             elif a.kind == "completed_message":
                 valid &= a.payload == "buy" and self.t - self.last_purchase[i] <= 24
                 if valid: self.send(i, "completed_purchase", "firsthand_observation", i, 0, "all")
@@ -553,10 +630,11 @@ class World:
             old = self.actions.get(a.reference)
             valid = bool(old and old[0] == i and
                          (old[2] == "requested" or
-                          (old[2] in {"accepted", "deferred"} and old[1].kind in {"relocate", "return"})))
+                          (old[2] in {"accepted", "deferred"} and old[1].kind in {"relocate", "return", "commute"})))
             if valid:
                 if old[1].kind == "relocate": self.relocation_pending[i] = False
                 if old[1].kind == "return": self.return_pending[i] = False
+                if old[1].kind == "commute" and self.commute_action_id[i] == a.reference: self.commute_action_id[i] = -1
                 if old[1].kind == "review": self.availability_review_pending[i] = False
                 self.actions[a.reference] = (old[0], old[1], "cancelled")
                 pending = self.actor_pending.get(i)
@@ -577,6 +655,8 @@ class World:
         if stage != "accepted":
             self.trace.log(self.t, "action", i, id=aid, kind=a.kind, stage=stage)
         if not valid:
+            if a.kind == "commute" and self.commute_action_id[i] == aid:
+                self.commute_action_id[i] = -1
             self.stats["actions_rejected"] += 1
         elif not deferred and a.kind not in {"buy", "buy_medicine", "commute", "query", "relocate", "return"}:
             self.complete(aid)
@@ -595,9 +675,10 @@ class World:
                        channel=channel, ttl=ttl, stage="sent")
 
     def announce(self, zone: int, claim: str):
-        if self.t - self.last_notice[zone] < 24:
+        key = (zone, claim)
+        if self.t - self.last_notice.get(key, -1e10) < 24:
             return
-        self.last_notice[zone] = self.t
+        self.last_notice[key] = self.t
         self.next_msg += 1
         mid = self.next_msg
         self.messages[mid] = dict(id=mid, sender=-1, origin=-100 - zone, created=self.t,
@@ -624,6 +705,37 @@ class World:
         view = MessageView(mid, m["origin"], m["sender"], m["created"], m["claim"], m["evidence"],
                            layer, credibility, visible)
         self.inbox[i].append(view)
+        if m["claim"].startswith(("road_closure:", "road_disruption:", "road_delay:")):
+            try: relevant = int(m["claim"].split(":", 1)[1]) == int(self.zone[i])
+            except (ValueError, IndexError): relevant = False
+            if relevant and m["evidence"] in {"firsthand", "institutional_announcement"}:
+                still_official = self.road_alert_source[i] == "official" and self.road_alert_until[i] >= self.t
+                self.road_alert_until[i] = max(self.road_alert_until[i], self.t + 24)
+                self.road_alert_source[i] = "official" if m["evidence"] == "institutional_announcement" or still_official else "peer"
+                self.stats["road_alerts_received"] += 1
+                self.trace.log(self.t, "information", i, road_alert=m["claim"], provenance=m["evidence"])
+                # The message merely offers a review opportunity. Only the
+                # participant policy can choose travel or relocation actions.
+                commute_relevant = self.shift_for(i, int(self.t // 24)) and 3 <= self.t % 24 < 10
+                move_relevant = self.relocation_pending[i] or self.return_pending[i]
+                if (commute_relevant or move_relevant) and self.information_review_at[i] < self.t - .01:
+                    at = self.t + (max(.1, 5.6 - self.t % 24) if commute_relevant and self.t % 24 < 5.5 else .1)
+                    self.information_review_at[i] = at
+                    self.call(at, "information_review", i)
+        elif m["claim"].startswith("road_reopened:") and m["evidence"] == "institutional_announcement":
+            try: relevant = int(m["claim"].split(":", 1)[1]) == int(self.zone[i])
+            except (ValueError, IndexError): relevant = False
+            if relevant:
+                self.road_alert_until[i] = -1e10
+                self.road_alert_source[i] = ""
+        if (m["claim"].startswith("relocation_intent:") and
+                m["evidence"] == "firsthand_intention" and m["sender"] == m["origin"] and
+                layer in {"close", "workplace"}):
+            parts = m["claim"].split(":")
+            if len(parts) == 3 and parts[1].isdigit() and int(parts[1]) == int(self.zone[i]) and parts[2] in {"main", "alternate"}:
+                self.peer_relocation_until[i] = self.t + 6
+                self.peer_relocation_route[i] = parts[2]
+                self.stats["peer_relocation_plans_received"] += 1
         if len(self.inbox[i]) > 32:
             self.inbox[i] = self.inbox[i][-32:]
         m["recipients"].add(i)
@@ -655,6 +767,8 @@ class World:
         old = self.actions.pop(aid, None)
         if old:
             i, a, _ = old
+            if a.kind == "commute" and self.commute_action_id[i] == aid:
+                self.commute_action_id[i] = -1
             self.trace.log(self.t, "action", i, id=aid, kind=a.kind, stage="completed")
 
     def shop_arrival(self, payload):
@@ -925,7 +1039,9 @@ class World:
             return
         # Actual physical road capacity gates the requested departure. A policy
         # may cancel a deferred attempt before it starts moving.
-        if not self.road_trip(int(self.zone[i]), 1, "relocation_arrival", i):
+        move = self.actions.get(aid)
+        route = "alternate" if move and move[1].target == 1 else "main"
+        if not self.road_trip(int(self.zone[i]), 1, "relocation_arrival", i, route=route):
             self.stats["relocation_transport_deferred"] += 1
             if aid in self.actions:
                 self.actions[aid] = (i, self.actions[aid][1], "deferred")
@@ -952,7 +1068,9 @@ class World:
         if action is None or action[2] in {"cancelled", "expired", "rejected"}:
             self.return_pending[i] = False
             return
-        if not self.road_trip(int(self.zone[i]), 1, "return_arrival", i):
+        move = self.actions.get(aid)
+        route = "alternate" if move and move[1].target == 1 else "main"
+        if not self.road_trip(int(self.zone[i]), 1, "return_arrival", i, route=route):
             self.stats["return_transport_deferred"] += 1
             if aid in self.actions:
                 self.actions[aid] = (i, self.actions[aid][1], "deferred")
@@ -1055,7 +1173,7 @@ class World:
         row = self.snapshot()
         self.metrics.append(row)
         self.trace.log(self.t, "state", -1, **row)
-        self.road_used = defaultdict(int, {(h, z): count for (h, z), count in self.road_used.items() if h >= int(self.t) - 2})
+        self.road_used = defaultdict(int, {key: count for key, count in self.road_used.items() if key[0] >= int(self.t) - 2})
         self.call(self.t + 24, "daily")
 
     def snapshot(self):
@@ -1070,6 +1188,17 @@ class World:
                     medicine_stockouts=int(self.stats["medicine_stockouts"]),
                     household_grocery=float(self.goods[:self.n, 0].sum()),
                     stockouts=int(self.stats["stockouts"]), completed_commutes=int(self.stats["completed_commutes"]),
+                    commute_first_choices=int(self.stats["commute_first_choices"]),
+                    message_informed_first_commute_choices=int(self.stats["message_informed_first_commute_choices"]),
+                    message_informed_first_route_choices=int(self.stats["message_informed_first_route_choices"]),
+                    message_informed_first_shift_choices=int(self.stats["message_informed_first_shift_choices"]),
+                    informed_commute_requests=int(self.stats["informed_commute_requests"]),
+                    informed_route_choices=int(self.stats["informed_route_choices"]),
+                    informed_shift_choices=int(self.stats["informed_shift_choices"]),
+                    road_alerts_received=int(self.stats["road_alerts_received"]),
+                    alternate_route_trips=int(self.stats["alternate_route_trips"]),
+                    peer_relocation_plans_received=int(self.stats["peer_relocation_plans_received"]),
+                    peer_coordinated_route_requests=int(self.stats["peer_coordinated_route_requests"]),
                     sales_units=float(self.stats["grocery_sales_units_milli"] / 1000),
                     mean_power_service=float(self.power_ratio.mean()),
                     energy_served_kwh=round(self.energy_served_kwh, 3),
@@ -1113,6 +1242,9 @@ class World:
         sid = self.factor_seq
         self.factor[(s.domain, s.zone, sid)] = s.multiplier
         self.call(self.t + s.duration_hours, "restore", (s.domain, s.zone, sid))
+        if s.domain in {"road_closure", "road"}:
+            for z in (range(self.z) if s.zone == -1 else [s.zone]):
+                self.announce(z, f"{'road_closure' if s.domain == 'road_closure' and s.multiplier == 0 else 'road_disruption'}:{z}")
         self.trace.log(self.t, "shock", -1, **asdict(s), stage="introduced", id=sid)
 
     def run(self):
@@ -1124,6 +1256,9 @@ class World:
                 if kind == "decide": self.decide(payload)
                 elif kind == "availability_review":
                     self.availability_review_pending[payload] = False
+                    self.decide(payload)
+                elif kind == "information_review":
+                    self.information_review_at[payload] = -1e10
                     self.decide(payload)
                 elif kind == "action": self.action(payload)
                 elif kind == "action_retry":
@@ -1137,10 +1272,12 @@ class World:
                 elif kind == "commute_retry":
                     aid, i, day = payload
                     if aid in self.actions and self.actions[aid][2] == "deferred" and int(self.t // 24) == day and self.household_local[i]:
-                        if self.road_trip(int(self.zone[i]), 1, "commute_arrival", (aid, i, day)):
+                        if self.road_trip(int(self.zone[i]), 1, "commute_arrival", (aid, i, day),
+                                          route=(self.actions[aid][1].payload if self.actions[aid][1].payload in {"main", "alternate"} else "main")):
                             self.actions[aid] = (i, self.actions[aid][1], "executed")
                             self.last_commute_day[i] = day
                         else:
+                            self.last_road_delay[i] = self.t
                             self.call(self.t + 1, "commute_retry", payload)
                 elif kind == "shop_arrival": self.shop_arrival(payload)
                 elif kind == "commute_arrival": self.commute_arrival(payload)
@@ -1163,6 +1300,10 @@ class World:
                 elif kind == "shock": self.shock(payload)
                 elif kind == "restore":
                     self.factor.pop(payload, None)
+                    if payload[0] in {"road_closure", "road"}:
+                        for z in (range(self.z) if payload[1] == -1 else [payload[1]]):
+                            if (self.factor_for("road", z) >= 1 and self.factor_for("road_closure", z) >= 1):
+                                self.announce(z, f"road_reopened:{z}")
                     self.trace.log(self.t, "shock", -1, id=payload[2], domain=payload[0],
                                    zone=payload[1], stage="restored")
                 elif kind == "scheduled_intent":

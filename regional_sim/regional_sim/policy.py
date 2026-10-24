@@ -45,6 +45,10 @@ class Observation:
     return_pending: bool
     relocation_request_id: int | None
     return_request_id: int | None
+    relocation_request_stage: str
+    relocation_request_route: str
+    return_request_stage: str
+    return_request_route: str
     availability_review_pending: bool
     comm_access: bool
     services_report: str | None
@@ -59,6 +63,15 @@ class Observation:
     pending_medicine_purchase: bool
     trust: float
     adoption_threshold: int
+    road_alert: bool = False
+    road_alert_source: str = ""
+    last_road_delay_hours_ago: float | None = None
+    commute_route_preference: bool = False
+    commute_time_preference: bool = False
+    pending_commute: bool = False
+    pending_commute_request_id: int | None = None
+    pending_commute_route: str = ""
+    peer_relocation_route: str = ""
 
 @dataclass(frozen=True)
 class Action:
@@ -82,10 +95,32 @@ class ScriptedPolicy:
         # No unsupported causal effect of other people's messages on relocation
         # is assumed. Other policies may use received messages differently.
         if o.availability_enabled:
+            updated_route = (o.road_alert and o.commute_route_preference) or o.peer_relocation_route == "alternate"
+            if (o.locally_present and o.relocation_pending and updated_route and
+                    o.relocation_request_route == "main" and
+                    o.relocation_request_stage in {"accepted", "deferred"} and
+                    o.relocation_request_id is not None and o.home_outage_hours > 0):
+                actions.append(Action("cancel", reference=o.relocation_request_id))
+                actions.append(Action("relocate", target=1, payload="while_unpowered", delay_hours=.5))
+                if o.comm_access: actions.append(Action("intended_message", payload="relocate"))
+            if (not o.locally_present and o.return_pending and updated_route and
+                    o.return_request_route == "main" and
+                    o.return_request_stage in {"accepted", "deferred"} and
+                    o.return_request_id is not None):
+                actions.append(Action("cancel", reference=o.return_request_id))
+                actions.append(Action("return", target=1, delay_hours=.5))
             if (o.locally_present and not o.relocation_pending and
                     o.home_outage_hours > 0 and
                     o.home_outage_hours >= o.relocation_preference_threshold_hours):
-                actions.append(Action("relocate", payload="while_unpowered"))
+                route = 1 if o.road_alert and o.commute_route_preference else -1
+                # A recent close/workplace contact's *actual stated intention*
+                # may coordinate route selection, never the decision to leave.
+                # No numeric peer-to-relocation effect has been calibrated.
+                if o.peer_relocation_route == "alternate":
+                    route = 1
+                actions.append(Action("relocate", target=route, payload="while_unpowered"))
+                if o.comm_access:
+                    actions.append(Action("intended_message", payload="relocate"))
             elif (o.locally_present and not o.relocation_pending and
                   o.home_outage_hours > 0 and not o.availability_review_pending and
                   math.isfinite(o.relocation_preference_threshold_hours) and
@@ -97,7 +132,7 @@ class ScriptedPolicy:
                     actions.append(Action("review", delay_hours=float(future) + .05))
             if (not o.locally_present and not o.return_pending and
                     o.home_restored_hours >= 6):
-                actions.append(Action("return"))  # Six hours is a C-level heuristic.
+                actions.append(Action("return", target=(1 if o.road_alert and o.commute_route_preference else -1)))  # Six hours is a C-level heuristic.
         reinforced = o.current_claim_exposures.get("retail_stockout", 0) >= o.adoption_threshold
         desired = o.grocery_need_daily * (4.0 if reinforced else 2.5)
         opening_delay = (rng.uniform(.1, .65) if 8 <= o.time % 24 <= 20.5
@@ -112,8 +147,23 @@ class ScriptedPolicy:
                                (o.balance_cents + o.cash_cents) / o.medicine_price_cents)
             if med_quantity >= .05:
                 actions.append(Action("buy_medicine", amount=round(med_quantity, 3), delay_hours=opening_delay))
-        if o.scheduled_shift and 5.5 <= o.time % 24 <= 10.5:
-            actions.append(Action("commute", delay_hours=rng.uniform(.05, .65)))
+        if (o.scheduled_shift and o.pending_commute and o.road_alert and
+                o.pending_commute_route == "main" and o.commute_route_preference and
+                o.pending_commute_request_id is not None):
+            actions.append(Action("cancel", reference=o.pending_commute_request_id))
+            actions.append(Action("commute", payload="alternate", delay_hours=rng.uniform(.05, .35)))
+        if o.scheduled_shift and not o.pending_commute and 5.5 <= o.time % 24 <= 10.5:
+            informed = o.road_alert
+            route = "alternate" if informed and o.commute_route_preference else "main"
+            # Observed Fix I-5 closure responses: 44% route adaptation and
+            # 48% off-peak adaptation, nonexclusive. Population transfer C.
+            # Time shift moves the attempt outside the modeled AM rush period;
+            # work-shift acceptance of flexible arrival remains an assumption.
+            shift = 2.5 if informed and o.commute_time_preference else 0.
+            actions.append(Action("commute", payload=route, delay_hours=shift + rng.uniform(.05, .65)))
+        if (o.comm_access and o.last_road_delay_hours_ago is not None and
+                o.last_road_delay_hours_ago < 4 and rng.random() < .32):
+            actions.append(Action("send", payload="road_delay"))
         if rng.random() < .05 and o.comm_access:
             actions.append(Action("query", payload="store_stock"))
         if o.locally_present and not o.power_at_home and o.comm_access and rng.random() < .16:

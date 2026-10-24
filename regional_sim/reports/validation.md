@@ -1,3 +1,5 @@
+> Historical earlier-version validation report only. For v0.4.0-dev, read `reports/travel_information_validation.md` and rerun the tests.
+
 **Archive notice:** This document reports 0.1.0 results. They were NOT regenerated under 0.3.1-dev. Current participant-relocation tests and calibration checks are in `docs/participant_communication.md` and `calibration/availability_results.json`.
 
 # Internal validation and measured results — RegionalSim 0.1.0

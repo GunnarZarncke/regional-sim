@@ -1,8 +1,8 @@
 {
   "name": "RegionalSim",
-  "version": "0.3.1-dev",
+  "version": "0.4.0-dev",
   "date": "2026-10-24",
-  "status": "participant-policy-controlled relocation and return; provisional survey-anchored operational availability; no morbidity, mortality, structural damage or independently validated long-run cutoff",
+  "status": "participant-controlled commute and relocation route adaptation, delivered official/peer travel information, transferred Fix I-5 commuter response marginals; no medical outcome calibration",
   "reference_region": "Columbus OH CBSA 18140",
   "reference_period": "2024",
   "independent_empirical_validation_passed": false,

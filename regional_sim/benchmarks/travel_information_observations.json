@@ -1,0 +1,47 @@
+{
+  "geographic_transfer_target": "Columbus OH CBSA 18140",
+  "observations": [
+    {
+      "id": "fix_i5_off_peak",
+      "source": "Ye, L., Mokhtarian, P. L., & Circella, G. (2012). Commuter impacts and behavior changes during a temporary freeway closure: The Fix I-5 project in Sacramento, California. Transportation Planning and Technology, 35(3), 341–371. https://doi.org/10.1080/03081060.2012.673270",
+      "url": "https://ideas.repec.org/a/taf/transp/v35y2011i3p341-371.html",
+      "event": "Intermittent closure of one mile of I-5 in downtown Sacramento during 2008 construction",
+      "measure": "Respondents who adopted avoiding rush hour",
+      "value": 0.48,
+      "unit": "respondent fraction",
+      "uncertainty": "Denominator and sampling design not available in accessible abstract; no CI asserted",
+      "evidence_category": "A",
+      "usage": "Transferred target for closure-informed commuter baseline propensity; not causal effect of message receipt"
+    },
+    {
+      "id": "fix_i5_route",
+      "source": "Ye, L., Mokhtarian, P. L., & Circella, G. (2012). Commuter impacts and behavior changes during a temporary freeway closure: The Fix I-5 project in Sacramento, California. Transportation Planning and Technology, 35(3), 341–371. https://doi.org/10.1080/03081060.2012.673270",
+      "url": "https://ideas.repec.org/a/taf/transp/v35y2011i3p341-371.html",
+      "event": "Intermittent closure of one mile of I-5 in downtown Sacramento during 2008 construction",
+      "measure": "Respondents who adopted changing route",
+      "value": 0.44,
+      "unit": "respondent fraction",
+      "uncertainty": "Denominator and sampling design not available in accessible abstract; correlation with departure changes not provided",
+      "evidence_category": "A",
+      "usage": "Transferred target for closure-informed commuter baseline propensity; not causal effect of message receipt"
+    },
+    {
+      "id": "traffic_info_context",
+      "source": "Khattak, A. J., Schofer, J. L., & Koppelman, F. S. (1995). Effect of traffic information on commuters' propensity to change route and departure time. Journal of Advanced Transportation, 29(2), 193–212. https://doi.org/10.1002/atr.5670290205",
+      "url": "https://onlinelibrary.wiley.com/doi/abs/10.1002/atr.5670290205",
+      "measure": "Route and departure changes depend on perceived accuracy, timeliness, and relevance of traffic reports",
+      "evidence_category": "A",
+      "usage": "Mechanism only; no transferred communication-treatment coefficient"
+    },
+    {
+      "id": "social_relocation_context",
+      "source": "Milch, K., Broad, K., Orlove, B., & Meyer, R. (2018). Decision science perspectives on hurricane vulnerability: Evidence from the 2010–2012 Atlantic hurricane seasons. Atmosphere, 9(1), 32. https://doi.org/10.3390/atmos9010032",
+      "url": "https://www.mdpi.com/2073-4433/9/1/32",
+      "measure": "23% of Sandy respondents planning to evacuate cited advice of friends or relatives as the main reason",
+      "value": 0.23,
+      "evidence_category": "A",
+      "usage": "Context only; hurricane evacuation not power-outage relocation; never fitted into policy coefficient"
+    }
+  ],
+  "excluded_domains": ["medical effects", "morbidity", "mortality"]
+}

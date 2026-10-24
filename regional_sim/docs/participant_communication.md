@@ -1,3 +1,5 @@
+> Historical 0.3.1-dev snapshot. The statements below that commuting and travel routes do not respond to peer/official information are **superseded** by `docs/travel_information.md` for 0.4.0-dev. No peer-to-relocation-probability coefficient was introduced.
+
 # Participant-controlled availability and communication audit — 0.3.1-dev
 
 ## Mechanisms actually implemented

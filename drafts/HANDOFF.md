@@ -2,12 +2,11 @@
 
 ## Open work
 
-- Close remaining **world freeze bar** gaps (`INSTRUCTIONS.md`): FDIC-style
-  finance heterogeneity, independent domain benchmarks, broader communication
-  evidence if baseline should depend on peers beyond stockout adoption.
-- Commit 0.3.1-dev when ready.
+- Close **world freeze bar** gaps (`INSTRUCTIONS.md`): FDIC finance heterogeneity,
+  independent validation of travel-information transfer (Fix I-5 → Columbus).
+- Commit 0.4.0-dev when ready.
 
 ## Recently shipped
 
-- **0.3.1-dev** participant-policy relocation + communication audit doc.
-- Prior: 0.3.0-dev availability, 0.2.0-dev calibration (`versions/`).
+- **0.4.0-dev** travel information (road closure notices, commute calibration).
+- Prior: 0.3.x availability/relocation policy, 0.2.0 calibration (`versions/`).

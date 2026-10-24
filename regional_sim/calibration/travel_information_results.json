@@ -1,0 +1,225 @@
+{
+  "status": "transferred closure-behavior marginal calibration, no independently estimated communication effect",
+  "target_study": "Ye, Mokhtarian & Circella, Fix I-5 Sacramento (2008 closure; published 2012)",
+  "targets": {
+    "reported_avoid_rush_hour": 0.48,
+    "reported_route_change": 0.44
+  },
+  "sampled_preference_means": {
+    "prefers_time_shift": 0.47333333333333333,
+    "prefers_route_change": 0.43733333333333335
+  },
+  "cases": {
+    "official_and_peer_road_notice": [
+      {
+        "completed_commutes": 1429,
+        "road_alerts_received": 2662,
+        "commute_first_choices": 2033,
+        "message_informed_first_commute_choices": 833,
+        "message_informed_first_route_choices": 388,
+        "message_informed_first_shift_choices": 402,
+        "informed_commute_requests": 1253,
+        "informed_route_choices": 806,
+        "informed_shift_choices": 422,
+        "alternate_route_trips": 806,
+        "travel_capacity_rejections": 41820,
+        "peer_relocation_plans_received": 0,
+        "seed": 47,
+        "prefs": {
+          "route": 0.44533333333333336,
+          "shift": 0.4603333333333333
+        },
+        "final_goods_error": 1.4551915228366852e-11,
+        "conditional_route_share": 0.4657863145258103,
+        "conditional_shift_share": 0.48259303721488594
+      },
+      {
+        "completed_commutes": 1334,
+        "road_alerts_received": 2702,
+        "commute_first_choices": 1988,
+        "message_informed_first_commute_choices": 862,
+        "message_informed_first_route_choices": 387,
+        "message_informed_first_shift_choices": 440,
+        "informed_commute_requests": 1261,
+        "informed_route_choices": 784,
+        "informed_shift_choices": 466,
+        "alternate_route_trips": 784,
+        "travel_capacity_rejections": 41372,
+        "peer_relocation_plans_received": 0,
+        "seed": 48,
+        "prefs": {
+          "route": 0.43366666666666664,
+          "shift": 0.4806666666666667
+        },
+        "final_goods_error": 2.1827872842550278e-11,
+        "conditional_route_share": 0.44895591647331784,
+        "conditional_shift_share": 0.5104408352668214
+      },
+      {
+        "completed_commutes": 1414,
+        "road_alerts_received": 2848,
+        "commute_first_choices": 2059,
+        "message_informed_first_commute_choices": 870,
+        "message_informed_first_route_choices": 389,
+        "message_informed_first_shift_choices": 411,
+        "informed_commute_requests": 1304,
+        "informed_route_choices": 822,
+        "informed_shift_choices": 437,
+        "alternate_route_trips": 822,
+        "travel_capacity_rejections": 39971,
+        "peer_relocation_plans_received": 0,
+        "seed": 49,
+        "prefs": {
+          "route": 0.433,
+          "shift": 0.479
+        },
+        "final_goods_error": 3.637978807091713e-11,
+        "conditional_route_share": 0.4471264367816092,
+        "conditional_shift_share": 0.4724137931034483
+      }
+    ],
+    "no_communications_control": [
+      {
+        "completed_commutes": 1217,
+        "road_alerts_received": 0,
+        "commute_first_choices": 1553,
+        "message_informed_first_commute_choices": 0,
+        "message_informed_first_route_choices": 0,
+        "message_informed_first_shift_choices": 0,
+        "informed_commute_requests": 543,
+        "informed_route_choices": 543,
+        "informed_shift_choices": 0,
+        "alternate_route_trips": 543,
+        "travel_capacity_rejections": 31372,
+        "peer_relocation_plans_received": 0,
+        "seed": 47,
+        "prefs": {
+          "route": 0.44533333333333336,
+          "shift": 0.4603333333333333
+        },
+        "final_goods_error": 7.275957614183426e-12,
+        "conditional_route_share": null,
+        "conditional_shift_share": null
+      },
+      {
+        "completed_commutes": 1210,
+        "road_alerts_received": 0,
+        "commute_first_choices": 1594,
+        "message_informed_first_commute_choices": 0,
+        "message_informed_first_route_choices": 0,
+        "message_informed_first_shift_choices": 0,
+        "informed_commute_requests": 503,
+        "informed_route_choices": 503,
+        "informed_shift_choices": 0,
+        "alternate_route_trips": 503,
+        "travel_capacity_rejections": 31066,
+        "peer_relocation_plans_received": 0,
+        "seed": 48,
+        "prefs": {
+          "route": 0.43366666666666664,
+          "shift": 0.4806666666666667
+        },
+        "final_goods_error": 1.4551915228366852e-11,
+        "conditional_route_share": null,
+        "conditional_shift_share": null
+      },
+      {
+        "completed_commutes": 1240,
+        "road_alerts_received": 0,
+        "commute_first_choices": 1586,
+        "message_informed_first_commute_choices": 0,
+        "message_informed_first_route_choices": 0,
+        "message_informed_first_shift_choices": 0,
+        "informed_commute_requests": 539,
+        "informed_route_choices": 539,
+        "informed_shift_choices": 0,
+        "alternate_route_trips": 539,
+        "travel_capacity_rejections": 29301,
+        "peer_relocation_plans_received": 0,
+        "seed": 49,
+        "prefs": {
+          "route": 0.433,
+          "shift": 0.479
+        },
+        "final_goods_error": 3.2741809263825417e-11,
+        "conditional_route_share": null,
+        "conditional_shift_share": null
+      }
+    ],
+    "routine_control": [
+      {
+        "completed_commutes": 1598,
+        "road_alerts_received": 1,
+        "commute_first_choices": 1598,
+        "message_informed_first_commute_choices": 0,
+        "message_informed_first_route_choices": 0,
+        "message_informed_first_shift_choices": 0,
+        "informed_commute_requests": 17,
+        "informed_route_choices": 17,
+        "informed_shift_choices": 0,
+        "alternate_route_trips": 17,
+        "travel_capacity_rejections": 170,
+        "peer_relocation_plans_received": 0,
+        "seed": 47,
+        "prefs": {
+          "route": 0.44533333333333336,
+          "shift": 0.4603333333333333
+        },
+        "final_goods_error": 2.5579538487363607e-13,
+        "conditional_route_share": null,
+        "conditional_shift_share": null
+      },
+      {
+        "completed_commutes": 1642,
+        "road_alerts_received": 9,
+        "commute_first_choices": 1642,
+        "message_informed_first_commute_choices": 2,
+        "message_informed_first_route_choices": 0,
+        "message_informed_first_shift_choices": 1,
+        "informed_commute_requests": 14,
+        "informed_route_choices": 12,
+        "informed_shift_choices": 1,
+        "alternate_route_trips": 12,
+        "travel_capacity_rejections": 78,
+        "peer_relocation_plans_received": 0,
+        "seed": 48,
+        "prefs": {
+          "route": 0.43366666666666664,
+          "shift": 0.4806666666666667
+        },
+        "final_goods_error": 1.3073986337985843e-12,
+        "conditional_route_share": 0.0,
+        "conditional_shift_share": 0.5
+      },
+      {
+        "completed_commutes": 1609,
+        "road_alerts_received": 11,
+        "commute_first_choices": 1609,
+        "message_informed_first_commute_choices": 3,
+        "message_informed_first_route_choices": 2,
+        "message_informed_first_shift_choices": 1,
+        "informed_commute_requests": 21,
+        "informed_route_choices": 20,
+        "informed_shift_choices": 1,
+        "alternate_route_trips": 20,
+        "travel_capacity_rejections": 140,
+        "peer_relocation_plans_received": 0,
+        "seed": 49,
+        "prefs": {
+          "route": 0.433,
+          "shift": 0.479
+        },
+        "final_goods_error": 3.637978807091713e-11,
+        "conditional_route_share": 0.6666666666666666,
+        "conditional_shift_share": 0.3333333333333333
+      }
+    ]
+  },
+  "medical_outcomes": "out of scope; excluded from fitting and report",
+  "limits": [
+    "conditional-on-awareness mapping is a transfer assumption",
+    "Fix I-5 marginals are nonexclusive; joint effects not published in extracted abstract",
+    "alternative road capacity and trip time are C-level assumptions",
+    "perceived accuracy, exposure, workplace flexibility, destination and peer coordination remain uncalibrated"
+  ]
+}

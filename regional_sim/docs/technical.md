@@ -1,3 +1,5 @@
+> Travel subsystem updated in 0.4.0-dev; see `docs/travel_information.md` for the two-corridor capacity model, closure notice flow, and policy-controlled trip revision.
+
 # Technical model and methods (0.1.0)
 
 ## Geographic and temporal definition

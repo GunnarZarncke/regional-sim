@@ -1,4 +1,4 @@
-# RegionalSim 0.3.1-dev — synthetic Columbus metropolitan prototype
+# RegionalSim 0.4.0-dev — synthetic Columbus metropolitan prototype
 
 An open-source, event-driven, six-domain regional socioeconomic simulation. **Research prototype with partial proxy calibration; not independently validated or operationally certified.** It does not infer death, illness severity, or any policy's desired outcome.
 
@@ -26,7 +26,7 @@ Example generic external disturbance file:
 [{"at_hour":25,"domain":"power","zone":-1,"multiplier":0.35,"duration_hours":24}]
 ```
 
-Domains: `power`, `road`, `communication`, `supply`, `payments`, `retail`, `services`, `demand`. A zone of -1 selects the full region. Existing factors multiply for overlapping events and each is removed by a distinct restoration event. No response sequence is hand-coded. Routine and seasonal scenarios use no artificial severe shocks. The stochastic moderate/severe distributions are marked **C-level assumptions, not fitted historical hazard distributions**.
+Domains: `power`, `road`, `road_closure` (opt-in targeted main corridor), `communication`, `supply`, `payments`, `retail`, `services`, `demand`. A zone of -1 selects the full region. Existing factors multiply for overlapping events and each is removed by a distinct restoration event. No response sequence is hand-coded. Routine and seasonal scenarios use no artificial severe shocks. The stochastic moderate/severe distributions are marked **C-level assumptions, not fitted historical hazard distributions**.
 
 ## Outputs
 
@@ -50,7 +50,7 @@ print(w.run())
 
 Policy code receives only frozen participant observations (with personal balances/inventory, on-site observations, access-gated requested data, received messages and pending request IDs) and an RNG. The engine owns all account balances, inventory, transport reservations, message routing and the event queue. Policies may emit **lists of ordinary actions**, including `buy`, `buy_medicine`, `commute`, `pay_bill`, `clinic`, `query`, `send`, `forward`, `ask`, `agree`, `disagree`, `intended_message`, `completed_message`, `relocate`, `return`, `review`, `schedule`, `cancel`, or `none`. The world validates claims, eligibility, capacity, ownership, information access and transaction feasibility. Future comparison-policy objectives do not exist in the model.
 
-See `docs/technical.md` for all action semantics, conservation equations and domain couplings; `provenance.json` for 69 parameter/source records; `docs/limitations.md` for failures and gaps; `reports/validation.md` for actual measurements. Run `python scripts/validate.py` to generate paired-seed comparison outputs and domain shock smoke checks.
+See `docs/technical.md` for all action semantics, conservation equations and domain couplings; `provenance.json` for 79 parameter/source records; `docs/limitations.md` for failures and gaps; `reports/travel_information_validation.md` for current travel experiments (`reports/validation.md` contains earlier-version tests). Run `python scripts/validate.py` to generate paired-seed comparison outputs and domain shock smoke checks.
 
 ## Status
 
@@ -83,7 +83,7 @@ regional-sim --config configs/development.json --no-availability --out output/ab
 
 See [docs/operational_availability.md](docs/operational_availability.md), `benchmarks/availability_observations.json` and `calibration/availability_results.json` for fitted survey endpoints, actual blackout and hurricane comparators *not* fitted, three-seed checks and all gaps. These are **not independently historically validated**; physical buildings have no damage or safety state. Prior example output folders and `calibration/results.json` were generated with the earlier 0.2.0-dev version; re-run them to compare model versions.
 
-## Participant-controlled relocation and communication (0.3.1-dev)
+## Participant-controlled relocation and communication (0.3.1-dev baseline; superseded by the 0.4.0-dev travel additions below)
 
 **Breaking API extension:** `Observation` now exposes the participant's own consecutive
 outage/restoration hours, private survey-proxy preference threshold, relocation/return
@@ -102,7 +102,7 @@ Actual delivered stockout reports **can affect** baseline grocery purchasing:
 stock from 2.5 to 4 days. The engine counts **distinct original sources**, not repeats
 of the same forwarded message. Participant decisions also affect what gets reported,
 asked and forwarded; messages are delayed and access/attention-gated. **There is no
-calibrated effect of social messages on baseline relocation**: its survey-proxy
+calibrated effect of social messages on whether baseline participants choose relocation**: its survey-proxy
 propensity uses only the participant's own observed loss of power. Custom policies
 may use personal messages and exposure counts to make relocation decisions, but
 such response coefficients would be experimental C-level assumptions.
@@ -121,3 +121,17 @@ consumption-response parameters therefore remain synthetic. See
 
 Run `python -m unittest discover -s tests -v` and
 `python -m scripts.validate_availability` to reproduce version-specific results.
+
+## Version 0.4.0-dev: communication-aware commuting and relocation travel
+
+The `road_closure` shock (main corridor only) now causes authentic, delayed, zone-local official road notices. A generic `road` capacity shock still affects both modeled corridors. Actual transport capacity is reserved separately on the alternate route. A participant's *own* failed departure can be reported as a delay, never automatically elevated to an asserted closure. Participants can change their commute route/departure time after **receiving** information; unexecuted deferred commute, relocation and return requests can be cancelled and revised by their policy. Genuine direct peer relocation plans can influence the route of a participant who already intends to leave, but cannot automatically cause departure. `ScriptedPolicy` remains interchangeable; the engine never chooses participants' travel strategies.
+
+The closure-response **marginal targets** transfer the observed 48% avoidance of rush hour and 44% route change reported in Ye, Mokhtarian & Circella's Fix I-5 Sacramento survey, not a causal effect of message receipt. Source-denominator differences, joint effects and generalization to Columbus remain unvalidated. No medical outcomes were added, calibrated or analyzed. Run `python -m scripts.calibrate_travel_information` and `python -m unittest discover -s tests -v`. The detailed calibration, constraints, ablation and gaps are in `docs/travel_information.md`.
+
+Post-change relocation-proxy regression: `python -m scripts.validate_availability` now reports 31.75% simulated temporary absence at one day versus the original 33% *stated* anchor (−1.25 percentage points) and 82.69% at fourteen days versus 83% (−0.31 percentage points), three seeds. No attempt was made to conceal this residual by changing communication parameters. These are not observed relocation validation results.
+
+To reproduce the new 10,000-household road closure with trace records:
+
+```bash
+regional-sim --households 10000 --days 3 --seed 47 --shock-json configs/road_closure_information.json --no-availability --sample-rate 0.002 --out output/road_closure
+```

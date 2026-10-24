@@ -1,0 +1,9 @@
+{
+  "households": 1000000,
+  "days": 7,
+  "zones": 120,
+  "retailers": 2400,
+  "seed": 42,
+  "scenario": "routine",
+  "sample_rate": 0.0001
+}

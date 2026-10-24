@@ -1,0 +1,11 @@
+{
+  "name": "RegionalSim",
+  "version": "0.1.0",
+  "date": "2026-10-23",
+  "status": "executable research prototype / source snapshot; not scientifically validated or frozen",
+  "reference_region": "Columbus OH CBSA 18140",
+  "reference_period": "2024",
+  "independent_empirical_validation_passed": false,
+  "large_configuration_initializes": true,
+  "million_household_full_run_verified": false
+}

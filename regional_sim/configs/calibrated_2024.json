@@ -1,0 +1,10 @@
+{
+  "households": 10000,
+  "days": 4,
+  "zones": 12,
+  "retailers": 24,
+  "seed": 42,
+  "scenario": "routine",
+  "sample_rate": 0.02,
+  "free_flow_minutes": 23.769318
+}

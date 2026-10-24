@@ -1,8 +1,8 @@
 {
   "name": "RegionalSim",
-  "version": "0.1.0",
-  "date": "2026-10-23",
-  "status": "executable research prototype / source snapshot; not scientifically validated or frozen",
+  "version": "0.2.0-dev",
+  "date": "2026-10-24",
+  "status": "partial source-linked proxy calibration; NOT independently validated, NOT frozen",
   "reference_region": "Columbus OH CBSA 18140",
   "reference_period": "2024",
   "independent_empirical_validation_passed": false,

@@ -1,0 +1,104 @@
+{
+  "version": "2026-10-24",
+  "boundary": "Columbus, OH CBSA 18140; 2024 ACS modeled population, June 2022 AEP Columbus outage area is NOT identical",
+  "observations": [
+    {
+      "id": "acs2024_commute",
+      "date": "2024 ACS 1-year",
+      "metric": "mean travel time to work",
+      "value": 24.1,
+      "published_margin_of_error": 0.4,
+      "unit": "minutes",
+      "evidence": "A",
+      "role": "calibration",
+      "source": "https://censusreporter.org/profiles/31000US18140-columbus-oh-metro-area/",
+      "qualifier": "ACS commuter-only mean; model completed vehicle trips also include freight and shopping, so comparison is a proxy"
+    },
+    {
+      "id": "acs2024_households",
+      "date": "2024 ACS 1-year",
+      "metric": "occupied households, model expansion denominator",
+      "value": 880121,
+      "published_margin_of_error": 6287,
+      "unit": "households",
+      "evidence": "A",
+      "role": "transfer_parameter",
+      "source": "https://censusreporter.org/profiles/31000US18140-columbus-oh-metro-area/",
+      "qualifier": "Includes entire CBSA, not only AEP accounts; 2024, not 2022"
+    },
+    {
+      "id": "aep2022_peak",
+      "date": "2022-06-14T20:00:00-04:00",
+      "metric": "reported Columbus-area customers out",
+      "value": 170000,
+      "published_margin_of_error": null,
+      "unit": "utility accounts",
+      "evidence": "A",
+      "role": "calibration",
+      "source": "https://www.aepohio.com/company/news/view?releaseID=8562",
+      "qualifier": "AEP retrospectively reported about 170000 central Ohio customers out at Tuesday 20:00 peak; a June 14 21:30 release reported approximately 169000 Columbus-area customers. Includes storm and controlled outages, both residential and nonresidential, with nonidentical regional labels"
+    },
+    {
+      "id": "aep2022_mid",
+      "date": "2022-06-15T14:00:00-04:00",
+      "metric": "reported Columbus-area customers out",
+      "value": 87000,
+      "published_margin_of_error": null,
+      "unit": "utility accounts",
+      "evidence": "A",
+      "role": "calibration",
+      "source": "https://www.aepohio.com/company/news/view?releaseID=8562",
+      "qualifier": "Approximate; reported as 87000 in Columbus at 2 pm. Some customers experienced repeated interruptions CAUTION: the AEP bulletin contains an internally inconsistent statewide figure (49,000 statewide versus 87,000 Columbus); use this point provisionally. WOSU independently reports 87,560 Franklin County customers at 13:11 on June 15, a different geographical boundary and observation time.",
+      "corroboration_url": "https://www.wosu.org/news/2022-06-14/storms-bring-down-power-lines-across-ohio-columbus-opens-five-cooling-centers",
+      "data_quality_flag": "published AEP bulletin inconsistent statewide vs Columbus totals; provisional target"
+    },
+    {
+      "id": "aep2022_restoration",
+      "date": "2022-06-16T04:51:00-04:00",
+      "metric": "load-shed event 3 restoration end",
+      "value": 0,
+      "published_margin_of_error": null,
+      "unit": "active controlled-load-shed customers",
+      "evidence": "A",
+      "role": "prescribed external end, NOT validation",
+      "source": "https://dam.assets.ohio.gov/image/upload/puco.ohio.gov/empliibrary/files/Power%20outage%20review/outage%20report%20010323.pdf",
+      "qualifier": "PUCO: event 3 customers restored by 04:51; not proof all storm-related outages restored"
+    },
+    {
+      "id": "nerc2022_june14",
+      "date": "2022-06-14",
+      "metric": "firm load shed reported by NERC",
+      "value": 500,
+      "published_margin_of_error": null,
+      "unit": "MW",
+      "evidence": "A",
+      "role": "context only, cannot be compared to simulated household outage fraction",
+      "source": "https://www.nerc.com/globalassets/our-work/reports/event-reports/aep_summer_2022_event.pdf",
+      "qualifier": "Firm load reduction, not number of customer outages; synthetic electricity network omits significant sectoral and transmission topology detail"
+    },
+    {
+      "id": "nerc2022_june15",
+      "date": "2022-06-15",
+      "metric": "firm load shed reported by NERC",
+      "value": 450,
+      "published_margin_of_error": null,
+      "unit": "MW",
+      "evidence": "A",
+      "role": "context only",
+      "source": "https://www.nerc.com/globalassets/our-work/reports/event-reports/aep_summer_2022_event.pdf",
+      "qualifier": "Does not equal PUCO Event 3 directive of 479MW: different reporting basis/rounding; not pooled"
+    },
+    {
+      "id": "puco2022_communications",
+      "date": "2022-06",
+      "metric": "AEP social impressions across entire service territory",
+      "value": 3510000,
+      "published_margin_of_error": null,
+      "unit": "impressions",
+      "evidence": "A",
+      "role": "unmatched gap",
+      "source": "https://dam.assets.ohio.gov/image/upload/puco.ohio.gov/empliibrary/files/Power%20outage%20review/outage%20report%20010323.pdf",
+      "qualifier": "57 posts, 3.51m impressions, >38k engagements; neither Columbus-only nor individual-recipient reach"
+    }
+  ]
+}

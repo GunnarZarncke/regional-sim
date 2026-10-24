@@ -1,0 +1,246 @@
+{
+  "status": "PARTIAL PROXY CALIBRATION, NOT independently validated",
+  "benchmark_file": "benchmarks/observations.json",
+  "methods": {
+    "commute": "paired-seed scaling of BPR t0; completed simulated trips vs ACS commuters is imperfect",
+    "outage": "inverse-fit exogenous regional power multiplier to observed customer counts divided by 2024 all-CBSA household estimate; one proxy observation per factor",
+    "historical_time": "hour 20 is Tuesday 20:00, hour 38 Wednesday 14:00; Thursday restoration timing imposed externally; world time origin is synthetic not the real 2022 calendar",
+    "scope_caveat": "AEP outage includes nonresidential customers, storm-initiated damage, and a boundary different from CBSA 18140; expansion is NOT measured and cannot be considered a fitted service territory",
+    "model_caveat": "Household ranks are a fractional-energy-allocation proxy, NOT actual feeder circuit disconnections; critical service prioritized independently"
+  },
+  "fitting_seeds": [
+    42,
+    43,
+    44
+  ],
+  "evaluation_seeds": [
+    46,
+    47
+  ],
+  "commute": {
+    "observed_minutes": 24.1,
+    "published_margin_of_error_minutes": 0.4,
+    "initial_freeflow_minutes": 24.0,
+    "fitted_freeflow_minutes": 23.769317831232243,
+    "before_fit_mean_minutes": 24.229333333333333,
+    "fit_seed_firstpass_mean_minutes": 24.204,
+    "other_seed_mean_minutes": 24.185000000000002,
+    "other_seed_values": [
+      24.186,
+      24.184
+    ]
+  },
+  "power": {
+    "denominator_CBSA_households_2024": 880121,
+    "denominator_MOE": 6287,
+    "events": [
+      {
+        "name": "peak",
+        "relative_hour": 20.0,
+        "observed_approx_accounts": 170000,
+        "target_PROXY_fraction": 0.1931552593336598,
+        "fit_external_power_multiplier": 0.65775390625,
+        "fit_seeds": {
+          "mean_outage_fraction": 0.1925,
+          "sample_sd": 0.003151190251317746,
+          "min": 0.1893,
+          "max": 0.1956,
+          "expanded_customer_equivalents_PROXY": 169423.2925,
+          "mean_unserved_kwh_in_one_simulated_hour": 2932.168145017086
+        },
+        "unseen_seeds_same_event_NOT_independent_historical_validation": {
+          "mean_outage_fraction": 0.1933,
+          "sample_sd": 0.0019798989873223505,
+          "min": 0.1919,
+          "max": 0.1947,
+          "expanded_customer_equivalents_PROXY": 170127.3893,
+          "mean_unserved_kwh_in_one_simulated_hour": 2958.087881842004
+        },
+        "bisection_trials": [
+          {
+            "trial": 0,
+            "multiplier": 0.505,
+            "outage_fraction": 0.39116666666666666
+          },
+          {
+            "trial": 1,
+            "multiplier": 0.7525,
+            "outage_fraction": 0.07056666666666667
+          },
+          {
+            "trial": 2,
+            "multiplier": 0.6287499999999999,
+            "outage_fraction": 0.23073333333333332
+          },
+          {
+            "trial": 3,
+            "multiplier": 0.6906249999999999,
+            "outage_fraction": 0.15083333333333335
+          },
+          {
+            "trial": 4,
+            "multiplier": 0.6596875,
+            "outage_fraction": 0.18986666666666666
+          },
+          {
+            "trial": 5,
+            "multiplier": 0.64421875,
+            "outage_fraction": 0.21006666666666668
+          },
+          {
+            "trial": 6,
+            "multiplier": 0.6519531249999999,
+            "outage_fraction": 0.19993333333333332
+          },
+          {
+            "trial": 7,
+            "multiplier": 0.6558203125,
+            "outage_fraction": 0.1954
+          },
+          {
+            "trial": 8,
+            "multiplier": 0.65775390625,
+            "outage_fraction": 0.1925
+          }
+        ]
+      },
+      {
+        "name": "mid",
+        "relative_hour": 38.0,
+        "observed_approx_accounts": 87000,
+        "target_PROXY_fraction": 0.09885004448252002,
+        "fit_external_power_multiplier": 0.73123046875,
+        "fit_seeds": {
+          "mean_outage_fraction": 0.09826666666666667,
+          "sample_sd": 0.002936551265231603,
+          "min": 0.0951,
+          "max": 0.1009,
+          "expanded_customer_equivalents_PROXY": 86486.55693333334,
+          "mean_unserved_kwh_in_one_simulated_hour": 1411.6170673968857
+        },
+        "unseen_seeds_same_event_NOT_independent_historical_validation": {
+          "mean_outage_fraction": 0.09965,
+          "sample_sd": 0.0016263455967290568,
+          "min": 0.0985,
+          "max": 0.1008,
+          "expanded_customer_equivalents_PROXY": 87704.05765,
+          "mean_unserved_kwh_in_one_simulated_hour": 1423.9856050135104
+        },
+        "bisection_trials": [
+          {
+            "trial": 0,
+            "multiplier": 0.505,
+            "outage_fraction": 0.3922
+          },
+          {
+            "trial": 1,
+            "multiplier": 0.7525,
+            "outage_fraction": 0.07076666666666667
+          },
+          {
+            "trial": 2,
+            "multiplier": 0.6287499999999999,
+            "outage_fraction": 0.23143333333333332
+          },
+          {
+            "trial": 3,
+            "multiplier": 0.6906249999999999,
+            "outage_fraction": 0.15113333333333334
+          },
+          {
+            "trial": 4,
+            "multiplier": 0.7215624999999999,
+            "outage_fraction": 0.11143333333333333
+          },
+          {
+            "trial": 5,
+            "multiplier": 0.7370312499999999,
+            "outage_fraction": 0.0909
+          },
+          {
+            "trial": 6,
+            "multiplier": 0.729296875,
+            "outage_fraction": 0.10066666666666667
+          },
+          {
+            "trial": 7,
+            "multiplier": 0.7331640625,
+            "outage_fraction": 0.09570000000000001
+          },
+          {
+            "trial": 8,
+            "multiplier": 0.73123046875,
+            "outage_fraction": 0.09826666666666667
+          }
+        ]
+      }
+    ]
+  },
+  "gaps": [
+    "AEP Columbus-area all-account denominator and 2022 same-date geography unavailable",
+    "Only two observed outage points; two shock multipliers are inverse-forced, not independent validation",
+    "Peak count approximation has no published sampling CI; cannot report calibrated statistical CIs",
+    "Model lacks electrical line topology, protection coordination and repair crew scheduling",
+    "NERC reported firm MW shed cannot be equated to outages without real sectoral load/account mapping",
+    "Communication figures are all-service-area social impressions rather than comparable individual exposure counts",
+    "No measured matched-shock effect data for payments, roads, retail losses, water/clinic demand or precautionary buying",
+    "No independent shock-response benchmark held out for final validation",
+    "June 15 AEP bulletin has an internally inconsistent statewide-vs-Columbus outage total; WOSU 87,560 Franklin County at 13:11 is an imperfect corroboration of 87,000 Columbus 14:00"
+  ],
+  "full_interlinked_runs": [
+    {
+      "seed": 46,
+      "hour20_unserved_households": 1919,
+      "hour38_unserved_households": 985,
+      "peak_unserved_household_fraction": 0.1948,
+      "unserved_household_hours": 49650,
+      "unserved_kwh": 65832.794,
+      "grocery_spoiled_units": 177.3816,
+      "unmet_grocery_units": 53.135,
+      "message_exposures": 9602,
+      "goods_error_max": 1.0913936421275139e-10,
+      "money_conserved": true,
+      "reserves_conserved": true,
+      "final_unserved_households": 0,
+      "paired_differences_vs_same_seed_routine_NOT_empirical_targets": {
+        "energy_unserved_kwh": 65832.794,
+        "grocery_spoiled_units": 177.3816,
+        "unmet_grocery_units": 53.135,
+        "message_exposures": 6862,
+        "message_reach": 4064,
+        "sales_units": -5.68,
+        "clinic_completed": -16,
+        "water_unmet_m3": 0.0,
+        "payment_failures": 0,
+        "shop_power_closures": 1156
+      }
+    },
+    {
+      "seed": 47,
+      "hour20_unserved_households": 1947,
+      "hour38_unserved_households": 1008,
+      "peak_unserved_household_fraction": 0.1982,
+      "unserved_household_hours": 50530,
+      "unserved_kwh": 65624.955,
+      "grocery_spoiled_units": 62.8697,
+      "unmet_grocery_units": 20.093,
+      "message_exposures": 9673,
+      "goods_error_max": 2.1827872842550278e-11,
+      "money_conserved": true,
+      "reserves_conserved": true,
+      "final_unserved_households": 0,
+      "paired_differences_vs_same_seed_routine_NOT_empirical_targets": {
+        "energy_unserved_kwh": 65624.955,
+        "grocery_spoiled_units": 62.8697,
+        "unmet_grocery_units": 20.093,
+        "message_exposures": 6838,
+        "message_reach": 3998,
+        "sales_units": 118.3,
+        "clinic_completed": 3,
+        "water_unmet_m3": 0.0,
+        "payment_failures": 0,
+        "shop_power_closures": 449
+      }
+    }
+  ]
+}

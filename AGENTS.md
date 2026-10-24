@@ -108,5 +108,5 @@ scoring function are leaks.
 - **Do not commit unless the user asks.** Stage only what this task
   authorized.
 - Do not commit `.venv/`, secrets, or huge trace dumps unless asked.
-- Prototype zip (`regional_sim_prototype.zip`) is an input artifact; do not
-  treat it as the frozen scientific release.
+- Archived drops live under `versions/artifacts/`; do not treat any zip or dev
+  build as the frozen scientific release.

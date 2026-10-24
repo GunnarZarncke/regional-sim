@@ -28,12 +28,15 @@ class Config:
     disable_coupling: tuple[str, ...] = ()
     extra_shocks: tuple[Shock, ...] = ()
     invariant_every_day: bool = True
+    free_flow_minutes: float = 24.0  # calibratable local travel time; FHWA alpha/beta remain fixed
 
     def validate(self):
         if self.households < 1 or self.days < 1 or self.zones < 1 or self.retailers < 1:
             raise ValueError("population, horizon, zones and retailers must be positive")
         if not 0 <= self.sample_rate <= 1:
             raise ValueError("sample_rate must lie in [0,1]")
+        if not 0 < self.free_flow_minutes < 240:
+            raise ValueError("free_flow_minutes must lie in (0,240)")
         for s in self.extra_shocks:
             s.validate(self.zones)
 
@@ -68,7 +71,7 @@ class World:
         r = np.random.default_rng(c.seed)
         self.policy = policy or ScriptedPolicy()
         self.t = 0.
-        self.events: list[tuple[float, int, str, Any]] = []
+        self.events: list[tuple[float, int, int, str, Any]] = []
         self.seq = 0
         self.trace = Trace(c.trace, self.n, c.full_trace, c.sample_rate)
         self.metrics = []
@@ -151,6 +154,10 @@ class World:
         self.energy_spilled_kwh = 0.
         self.home_demand_kwh = 0.
         self.home_served_kwh = 0.
+        self.power_unserved_households_peak = 0
+        self.power_unserved_households_last = 0
+        self.power_unserved_household_hours = 0
+        self.power_hourly = []  # low-volume diagnostics; not a detailed load-flow trace
         self.service_water = 0.
         self.service_water_unmet = 0.
         self.clinic_capacity = 0
@@ -192,7 +199,7 @@ class World:
         if when < self.t - 1e-8:
             raise ValueError("events cannot be scheduled in the past")
         self.seq += 1
-        heapq.heappush(self.events, (float(when), self.seq, kind, payload))
+        heapq.heappush(self.events, (float(when), 0 if kind in ("shock", "restore") else 1, self.seq, kind, payload))
 
     def local_factor(self, domain: str, zone: int) -> float:
         v = 1.
@@ -316,7 +323,7 @@ class World:
             self.trace.log(self.t, "mobility", -1, result="deferred", zone=zone, purpose=purpose, vehicles=units)
             return False
         ratio = (used + units) / cap
-        travel = .40 * (1 + .15 * ratio ** 4)   # FHWA BPR: alpha=.15, beta=4
+        travel = (self.cfg.free_flow_minutes / 60.) * (1 + .15 * ratio ** 4)   # FHWA BPR: alpha=.15, beta=4
         duration = max(1, math.ceil(travel))
         for h in range(hour, hour + duration):
             if self.road_used[(h, zone)] + units > cap:
@@ -753,6 +760,14 @@ class World:
         served = float(critical_served.sum() + available_noncritical.sum())
         self.home_demand_kwh += float(homes.sum())
         self.home_served_kwh += float((available_noncritical * homes / (homes + commercial)).sum())
+        # Fixed household power ranks provide a transparent account-level outage proxy.
+        # These are NOT geographic feeder assignments; use only with a separately
+        # documented population/utility-account expansion assumption.
+        unserved_households = int(np.count_nonzero(self.power_rank >= self.power_ratio[self.zone]))
+        self.power_unserved_households_last = unserved_households
+        self.power_unserved_households_peak = max(self.power_unserved_households_peak, unserved_households)
+        self.power_unserved_household_hours += unserved_households
+        self.power_hourly.append((round(float(self.t), 5), unserved_households, round(float(self.power_ratio.mean()), 6)))
         self.generation_kwh += supply
         self.energy_served_kwh += served
         self.energy_spilled_kwh += max(0, supply - served)
@@ -883,6 +898,9 @@ class World:
                     residential_served_kwh_per_household_day=round(self.home_served_kwh / self.n / max(1e-6, self.t/24), 3),
                     mean_travel_minutes=round(self.stats["travel_minutes_total"] / max(1, self.stats["vehicle_trips"]), 3),
                     interrupted_feeder_hours=int(self.stats["interrupted_feeder_hours"]),
+                    power_unserved_households_peak=int(self.power_unserved_households_peak),
+                    power_unserved_households_last=int(self.power_unserved_households_last),
+                    power_unserved_household_hours=int(self.power_unserved_household_hours),
                     repeated_source_exposures=int(self.stats["repeated_source_exposures"]),
                     source_top_share=(max(self.reached_counts.values()) / self.cumulative_observed if self.cumulative_observed else 0.),
                     water_unmet_m3=round(self.service_water_unmet, 3),
@@ -911,7 +929,7 @@ class World:
         horizon = self.cfg.days * 24
         try:
             while self.events and self.events[0][0] <= horizon:
-                t, _, kind, payload = heapq.heappop(self.events)
+                t, _, _, kind, payload = heapq.heappop(self.events)
                 self.t = t
                 if kind == "decide": self.decide(payload)
                 elif kind == "action": self.action(payload)

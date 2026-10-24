@@ -2,17 +2,12 @@
 
 ## Open work
 
-- Close gaps between v0.1 and the **world freeze bar** in `INSTRUCTIONS.md`
-  § world freeze (FDIC/Basel heterogeneity, human-baseline coupling demos,
-  containment-as-success)—without editing the blinded assignment.
-- Audit prototype finance/withdrawal vs insured/uninsured evidence; B vs A in
-  `regional_sim/provenance.json`.
+- Close gaps in `regional_sim/docs/calibration.md` vs **world freeze bar**
+  (`INSTRUCTIONS.md`): FDIC-style behavioral heterogeneity, independent domain
+  benchmarks, human-baseline coupling report.
+- Decide git commit for 0.2.0-dev tree + `versions/`.
 
 ## Recently shipped
 
-- Standalone git repo in `regional-sim/` (three commits: setup, plan, v0.1).
-- Removed erroneous commits from parent `zarncke` monorepo (`git reset HEAD~3`).
-
-## Backup
-
-Full tree snapshot (pre-init): `/Users/GunnarZarncke/repos/zarncke-regional-sim-backup-20261024` (safe to delete after you confirm this repo).
+- Replaced live `regional_sim/` with **0.2.0-dev** from calibrated zip; added
+  `versions/` (0.1.0 + 0.2.0-dev docs, artifacts under `versions/artifacts/`).

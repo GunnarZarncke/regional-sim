@@ -1,6 +1,6 @@
-# RegionalSim 0.1.0 — synthetic Columbus metropolitan prototype
+# RegionalSim 0.2.0-dev — synthetic Columbus metropolitan prototype
 
-An open-source, event-driven, six-domain regional socioeconomic simulation. **Research prototype, not a calibrated, validated, operationally certified release.** It does not infer death, illness severity, or any policy's desired outcome.
+An open-source, event-driven, six-domain regional socioeconomic simulation. **Research prototype with partial proxy calibration; not independently validated or operationally certified.** It does not infer death, illness severity, or any policy's desired outcome.
 
 ## Install and execute
 
@@ -18,7 +18,7 @@ Windows PowerShell activation: `.venv\Scripts\Activate.ps1`. The runtime depends
 
 The development preset includes **10,000 individual household decision units**, 12 aggregated geographic zones and 24 retailers over 30 days. The large preset (`configs/large.json`) specifies 1,000,000 households, 120 zones and 2,400 retailers. It **initializes** at 1,000,000 households but a complete one-day run did not finish within our 200-second test bound; it is not a performance guarantee. A 100,000-household one-day run completed.
 
-`--config` loads JSON defaults; explicit CLI flags override them. Options: `--households`, `--days`, `--seed`, `--zones`, `--retailers`, `--scenario routine|seasonal|moderate|severe`, `--shock-json`, `--full-trace`, `--sample-rate`, `--disable-coupling`, `--out`. The fixed target is Columbus, OH CBSA 18140; zoning is synthetic and can be refined at higher population scale. Synthetic clock starts on **Monday, April 1, 2024** at 00:00 Eastern local time; there is no daylight-saving transition engine, bank-holiday calendar or other historical event playback.
+`--config` loads JSON defaults; explicit CLI flags override them. Options: `--households`, `--days`, `--seed`, `--zones`, `--retailers`, `--scenario routine|seasonal|moderate|severe`, `--shock-json`, `--full-trace`, `--sample-rate`, `--free-flow-minutes`, `--disable-coupling`, `--out`. The fixed target is Columbus, OH CBSA 18140; zoning is synthetic and can be refined at higher population scale. Synthetic clock starts on **Monday, April 1, 2024** at 00:00 Eastern local time; there is no daylight-saving transition engine, bank-holiday calendar or other historical event playback.
 
 Example generic external disturbance file:
 
@@ -50,10 +50,24 @@ print(w.run())
 
 Policy code receives only frozen participant observations (with personal balances/inventory, on-site observations, access-gated requested data, received messages and pending request IDs) and an RNG. The engine owns all account balances, inventory, transport reservations, message routing and the event queue. Policies may emit **lists of ordinary actions**, including `buy`, `buy_medicine`, `commute`, `pay_bill`, `clinic`, `query`, `send`, `forward`, `ask`, `agree`, `disagree`, `intended_message`, `completed_message`, `schedule`, `cancel`, or `none`. The world validates claims, eligibility, capacity, ownership, information access and transaction feasibility. Future comparison-policy objectives do not exist in the model.
 
-See `docs/technical.md` for all action semantics, conservation equations and domain couplings; `provenance.json` for 49 parameter/source records; `docs/limitations.md` for failures and gaps; `reports/validation.md` for actual measurements. Run `python scripts/validate.py` to generate paired-seed comparison outputs and domain shock smoke checks.
+See `docs/technical.md` for all action semantics, conservation equations and domain couplings; `provenance.json` for 56 parameter/source records; `docs/limitations.md` for failures and gaps; `reports/validation.md` for actual measurements. Run `python scripts/validate.py` to generate paired-seed comparison outputs and domain shock smoke checks.
 
 ## Status
 
 All automated unit/integration tests must pass before using the generated output as a software example. This build is **not the validated frozen release specified in the assignment**. Independent empirical disturbance benchmarks, local calibration, legal banking implementation, electrical topology / protective relays, GIS road network, service continuity protocols, and million-unit run profiling are still outstanding. `MANIFEST.sha256` identifies the artifact contents, not scientific validation.
 
 License: MIT (`LICENSE`).
+
+## Partial source-linked calibration (0.2.0-dev supplement)
+
+The previous 0.1.0 internal-software report and traces remain reproducible legacy baseline artifacts. The new opt-in benchmark/calibration workflow is **partial and explicitly not independently validated**:
+
+```bash
+python scripts/calibrate.py
+regional-sim --config configs/calibrated_2024.json --shock-json configs/aep_2022_proxy_shocks.json --out output/calibrated_case
+regional-sim --config configs/calibrated_2024.json --out output/calibrated_control
+```
+
+It fits a configurable BPR free-flow time to a 2024 Columbus ACS commute-time **proxy** and two *external* supply multipliers to approximate June 2022 AEP outage-count **proxies**, not to a physical circuit reconstruction. Source observations and explicit comparability limits are in `benchmarks/observations.json`; trials, seed checks and measured paired outcomes are in `calibration/results.json`; interpretations and missing independent validation are in `docs/calibration.md`. Three new regression tests cover precise shock-tick ordering, outage boundedness and free-flow sensitivity. The provenance generator now produces **56** entries, including observed benchmarks and separately flagged inverse-fitted C-level quantities. The archived 0.1.0 report's statement of 16 tests / 49 parameters describes the older snapshot, not this supplement.
+
+The new `--free-flow-minutes` flag (`Config.free_flow_minutes`) defaults to the legacy 24 minutes; the calibrated configuration sets about 23.7693. The `power_unserved_households_*` counters describe a fixed-rank *scalar service proxy*, **not an engineered feeder/customer outage circuit model**. Externally scheduled restoration remains an input. Never use the two fitted points as evidence of independent shock-response validation.

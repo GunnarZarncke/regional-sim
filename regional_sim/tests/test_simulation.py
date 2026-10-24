@@ -181,3 +181,25 @@ class ModelTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class CalibrationMechanismTests(unittest.TestCase):
+    def test_shock_at_hourly_tick_precedes_power_recalculation(self):
+        w=world(n=600,days=2,extra_shocks=(Shock(20.,'power',-1,.3,2.),))
+        w.run()
+        hour_to_out={h:n for h,n,_ in w.power_hourly}
+        self.assertEqual(hour_to_out[19.],0)
+        self.assertGreater(hour_to_out[20.],0)
+        self.assertEqual(hour_to_out[22.],0)
+
+    def test_configurable_free_flow_affects_travel(self):
+        a,b=world(n=400,free_flow_minutes=24.),world(n=400,free_flow_minutes=18.)
+        a.road_trip(0,1,'commute_arrival',(0,0,0))
+        b.road_trip(0,1,'commute_arrival',(0,0,0))
+        self.assertGreater(a.stats['travel_minutes_total'],b.stats['travel_minutes_total'])
+        a.trace.close(); b.trace.close()
+
+    def test_power_outage_counts_bounded_by_population(self):
+        w=world(n=500,days=2,extra_shocks=(Shock(20.,'power',-1,.6,2.),))
+        s=w.run()
+        self.assertTrue(0<=s['power_unserved_households_peak']<=w.n)
+        self.assertEqual(s['power_unserved_households_last'],0)

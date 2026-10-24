@@ -57,3 +57,7 @@ The 1,000,000-household / 120-zone / 2,400-retailer world **initialized and pass
 ## Release decision
 
 **Do not designate 0.1.0 as the final frozen research environment** requested by the assignment. A reproducible source snapshot and SHA-256 manifest are provided, but credible empirical parameter calibration, independent per-domain validation, institutional protocol verification, severe-scenario empirical distribution fitting and complete million-unit performance proof are outstanding. This report retains failures and ambiguous effects instead of modifying data to pass them.
+
+## 0.2.0-dev calibration supplement (2026-10-24)
+
+The historical 0.1.0 16-test / 49-entry counts above are retained as a snapshot, not current release counts. The source-linked `docs/calibration.md` gives results from **19 currently passing regression tests and 56 current provenance records**. Its two AEP points are fitted inverse external shocks using a known **mismatched denominator**. No independent empirical validation across all domains has been passed, and the original release decision remains **do not freeze**. See `calibration/results.json` for reproducible actual full-engine outputs, including both no-effect and direction-changing downstream metrics.

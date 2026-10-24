@@ -51,3 +51,10 @@ Each item in `provenance.json` has name, units, full bibliographic title/URL whe
 ## Limits on institutional validity and planned calibration
 
 Absent: named banks, deposits/check hold application of 12 CFR Part 229, NACHA settlement/returns/calendar; feeder topology, certified IEEE/NERC relay timing and power-flow verification; freight route GIS and public transit; clinical demand/risk distributions and physician triage; firm balance-sheet/production input-output tables; source-calibrated shopping and communication policies; fully independent held-out disturbance comparisons. These are *required* for an empirical release. Preserve and report them rather than silently adding precision to synthetic parameters.
+
+
+## 0.2.0-dev source-linked calibration extension
+
+The generic historical 0.1.0 description above retains its original 24-minute free-flow default. `Config.free_flow_minutes` / `--free-flow-minutes` now replace this fixed default when supplied (the opt-in `configs/calibrated_2024.json` fits about 23.7693 minutes to a *proxy* for the ACS 24.1-minute commuter mean).
+
+Electricity retains the hourly scalar energy calculation but now records three additional diagnostic counters: last-hour count of household fixed-power ranks exceeding the supplied zonal service ratio, maximum such count and cumulative unserved household-hours. `power_hourly` stores time/count/zone-averaged noncritical ratio for reproducible diagnostics. These are **proxy reported customer interruption counts**; no empirical feeder/circuit topology or exact household meter voltage states are modeled. Shock/restore events take precedence over hourly domain events when their scheduled time is identical. At an externally specified shock end, the model does not simulate physical crew repair. See `docs/calibration.md` for the unidentifiable AEP-to-ACS account expansion, fitted factors, observed residuals and per-domain remaining gaps. All original monetary/physical conservation rules and critical-load allocation are unchanged.

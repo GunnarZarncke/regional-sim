@@ -24,7 +24,7 @@ simulator plus one protocol.
 | [`INSTRUCTIONS.md`](INSTRUCTIONS.md) | Mission, **world-freeze bar** (magnitudes, human-baseline coupling, no required catastrophe), experiment discipline |
 | [`AGENTS.md`](AGENTS.md) | Agent working rules |
 
-[`regional_sim/`](regional_sim/) — RegionalSim **0.1.0** research prototype from the blinded build (not a validated release).
+[`regional_sim/`](regional_sim/) — RegionalSim **0.2.0-dev** (partial shock-magnitude calibration; not validated or frozen). Version history: [`versions/`](versions/).
 
 ## Working with agents
 

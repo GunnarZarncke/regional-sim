@@ -1,0 +1,16 @@
+[
+  {
+    "at_hour": 20.0,
+    "domain": "power",
+    "zone": -1,
+    "multiplier": 0.65775390625,
+    "duration_hours": 18.0
+  },
+  {
+    "at_hour": 38.0,
+    "domain": "power",
+    "zone": -1,
+    "multiplier": 0.73123046875,
+    "duration_hours": 14.85
+  }
+]

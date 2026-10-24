@@ -21,6 +21,7 @@ def main(argv=None):
     p.add_argument("--out", default="output")
     p.add_argument("--full-trace", action="store_true")
     p.add_argument("--sample-rate", type=float, default=.02)
+    p.add_argument("--free-flow-minutes", type=float, default=24.0)
     p.add_argument("--shock-json", help="JSON file containing an array of shock objects")
     p.add_argument("--disable-coupling", action="append", default=[])
     p.set_defaults(**defaults)
@@ -34,7 +35,8 @@ def main(argv=None):
     cfg = Config(households=args.households, days=args.days, seed=args.seed, scenario=args.scenario,
                  zones=args.zones, retailers=args.retailers,
                  trace=str(out / "traces.ndjson"), full_trace=args.full_trace, sample_rate=args.sample_rate,
-                 disable_coupling=tuple(args.disable_coupling), extra_shocks=shocks)
+                 disable_coupling=tuple(args.disable_coupling), extra_shocks=shocks,
+                 free_flow_minutes=args.free_flow_minutes)
     sim = World(cfg)
     result = sim.run()
     sim.write_metrics(out / "daily.csv")

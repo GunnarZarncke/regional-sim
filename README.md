@@ -21,7 +21,7 @@ simulator plus one protocol.
 |------|------|
 | [`blinded-simulation-development.md`](blinded-simulation-development.md) | Frozen world-build assignment (same text as `regional_sim/docs/assignment.txt`; v0.1 built to this) |
 | [`multi-domain-counterexample-protocol.md`](multi-domain-counterexample-protocol.md) | AI-replacement experiment (after freeze) |
-| [`INSTRUCTIONS.md`](INSTRUCTIONS.md) | Mission, **world-freeze bar** beyond the assignment, experiment discipline |
+| [`INSTRUCTIONS.md`](INSTRUCTIONS.md) | Mission, **world-freeze bar** (magnitudes, human-baseline coupling, no required catastrophe), experiment discipline |
 | [`AGENTS.md`](AGENTS.md) | Agent working rules |
 
 [`regional_sim/`](regional_sim/) — RegionalSim **0.1.0** research prototype from the blinded build (not a validated release).

@@ -10,6 +10,26 @@ The null hypothesis is that AI adoption does not produce additional systemic har
 
 Do not modify the released simulation to favor either result.
 
+## 1.1 Prerequisites on the frozen world
+
+Do not begin participant replacement until the world build satisfies the
+**world freeze bar** in [`INSTRUCTIONS.md`](INSTRUCTIONS.md) (requirements
+that extend, but do not replace, the blinded assignment in
+`blinded-simulation-development.md`).
+
+At minimum, document in the validation release:
+
+1. **Effect magnitudes** on the human baseline—including heterogeneity where
+   source literature requires it (not pooled propensities where groups differed
+   in real events).
+2. **Cross-domain coupling** exercised under scripted human policies (e.g.
+   transport→deliveries, payments/settlement→transactions) before any AI run.
+3. **Acceptance without catastrophe**—containment by safeguards counts as success
+   for the world; collapse is not a release criterion.
+
+The adoption experiment compares AI replacement to **that** validated baseline.
+It must not be the first test of magnitude claims or ordinary couplings.
+
 ## 2. Preregistration
 
 Before inspecting the experimental outcomes, register:

@@ -53,31 +53,53 @@ retro-edit the assignment to match later validation goals.
 
 These requirements **extend** the blinded assignment for accepting a **frozen
 world release** and starting participant replacement. They were not part of the
-v0.1 build brief.
+v0.1 build brief. Do **not** add them to
+`blinded-simulation-development.md` / `regional_sim/docs/assignment.txt`.
 
-- Ordinary operating rules first; severe shocks only from a prespecified
-  generator, not a crafted narrative.
-- Couplings only with a documented mechanism.
-- Conserve money, goods, energy, and other tracked quantities, or account
-  for loss explicitly.
-- Keep real safeguards; document approximations.
-- Human policies from published behavior, not invented crisis scripts.
-- Interchangeable policy API: observe → intended actions; the engine
-  enforces feasibility.
-- Source register with evidence grades A / B / C. Do not sell C as data.
-- **Magnitudes, not vibes:** human baseline must match published effect sizes
-  and subgroup differences where evidence exists (e.g. insured vs uninsured
-  depositors in 2023 bank-run studies). Do not use one pooled withdrawal
-  propensity for everyone.
-- **B ≠ A:** Basel-style liquidity horizons and other regulatory stress inputs
-  are institutional requirements, not observed minute-by-minute behavior; label
-  and validate separately.
-- **Coupling first:** demonstrate transport→delivery, payments→transactions,
-  and other ordinary links on the **scripted human baseline** before any AI
-  condition; do not treat the AI experiment as the first coupling test.
-- **No catastrophe requirement:** world release = fidelity, conservation,
-  protocols, reproducibility, policy API. Baselines that contain shocks are
-  fine.
+Shared habits still apply: ordinary operating rules first; documented
+coupling mechanisms; conservation; real safeguards; human policies from
+published behavior; interchangeable policy API; A / B / C provenance (see
+evidence grades below).
+
+#### 1. Effect magnitudes and heterogeneity
+
+The human baseline must reproduce **known effect magnitudes**, not merely
+plausible-looking trajectories. Compare outputs to published benchmarks on
+held-out conditions not used to fit parameters.
+
+Where real populations differ, the model must represent those differences.
+[FDIC](https://www.fdic.gov/) analyses of the 2023 bank failures report
+sharply different withdrawal behavior between large uninsured depositors and
+fully insured retail customers; the latter generally did not run before those
+failures. A simulator that treats all depositors as equally likely to withdraw
+on rumor is not empirically grounded.
+
+**Regulatory stress parameters are not observed micro-behavior.** Category B
+inputs (e.g. Basel 30-day liquidity horizons, supervisory stress assumptions)
+describe how institutions must plan or respond; they are not direct estimates
+of minute-by-minute withdrawal or payment probabilities. Label them B, do not
+present them as A-level behavior, and validate behavioral claims against
+observational evidence where it exists.
+
+#### 2. Coupling on the human baseline first
+
+Normal multidomain coupling must be **demonstrated** under scripted human
+policies before any AI condition runs. Examples: transport interruption delays
+or cancels deliveries; payment backlog or settlement delay blocks or defers
+transactions according to modeled obligations and settlement rules.
+
+Record these checks in the world validation release. If a cross-domain effect
+appears only after AI policies are swapped in, the experiment would restate
+couplings that were never validated in the baseline world.
+
+#### 3. Release without requiring catastrophe
+
+World acceptance means empirical fidelity (within stated uncertainty),
+conservation of resources, correct protocol behavior, reproducibility, and a
+sufficiently general participant interface. **Do not** require the human
+baseline to produce systemic collapse. A simulator that consistently **contains**
+disturbances via ordinary safeguards and realistic behavior may be an excellent
+result—not a failed world build.
 
 ### Experiment (`multi-domain-counterexample-protocol.md`)
 

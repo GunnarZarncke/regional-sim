@@ -24,10 +24,12 @@ Bias toward caution over speed. Use judgment on trivial tasks.
 - If the request would bake the experimental hypothesis into the world
   model, stop and say so.
 - If a simpler model or a documented C-level assumption would do, say so.
-- **Calibration traps:** pooled behavior where literature shows heterogeneity;
-  treating regulatory stress parameters as observed micro-rates; coupling checks
-  only under AI policies; treating “no systemic collapse in baseline” as a
-  failed world build.
+- **Calibration traps:** pooled withdrawal (or similar) where FDIC-style evidence
+  shows insured vs uninsured heterogeneity; Basel B-level liquidity horizons used
+  as minute-by-minute A-level behavior; coupling demos only under AI policies;
+  treating a containing human baseline as a failed world build.
+- **Do not edit** `blinded-simulation-development.md` for post-v1 validation
+  goals—put freeze-bar changes in `INSTRUCTIONS.md` and the experiment protocol.
 
 ### Simplicity first
 

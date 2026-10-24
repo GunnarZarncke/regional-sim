@@ -189,6 +189,9 @@ class World:
         self.relocation_trigger_h = np.array([relocation_trigger_hours(float(x)) for x in r.uniform(1e-8, 1-1e-8, self.n)])
         self.relocation_pending = np.zeros(self.n, dtype=bool)
         self.return_pending = np.zeros(self.n, dtype=bool)
+        self.availability_review_pending = np.zeros(self.n, dtype=bool)
+        self.relocation_action_id = np.full(self.n, -1, dtype=np.int64)
+        self.return_action_id = np.full(self.n, -1, dtype=np.int64)
         self.rel_location_absence_hours = 0
         # Direct one-day 49% SMB stated shutdown intention, transferred to retailers
         # as a C-level Bernoulli operational *workaround* proxy when site loses grid.
@@ -377,7 +380,12 @@ class World:
         zone = int(self.zone[i]); shop = int(self.store_of[i])
         messages = tuple(self.inbox.pop(i, []))
         exposures = {claim: len(src) for claim, src in self.claim_sources.get(i, {}).items()}
-        active = tuple(sorted(self.actor_pending.get(i, ())))
+        active_ids = set(self.actor_pending.get(i, ()))
+        for move_aid, move_pending in ((int(self.relocation_action_id[i]), self.relocation_pending[i]),
+                                       (int(self.return_action_id[i]), self.return_pending[i])):
+            if move_pending and move_aid in self.actions:
+                active_ids.add(move_aid)
+        active = tuple(sorted(active_ids))
         return Observation(
             participant=i, time=self.t, zone=zone, weekday=int(self.t / 24) % 7,
             locally_present=bool(self.household_local[i]),
@@ -389,6 +397,15 @@ class World:
             local_price_cents=int(self.store_price[shop]), medicine_price_cents=self.medicine_price_cents,
             shop_stock_report=self.stock_signal(i),
             power_at_home=(bool(self.power_rank[i] < self.power_ratio[zone]) if self.household_local[i] else None),
+            availability_enabled=self.cfg.availability_extension,
+            home_outage_hours=int(self.hh_outage_hours[i]),
+            home_restored_hours=int(self.hh_restored_hours[i]),
+            relocation_preference_threshold_hours=float(self.relocation_trigger_h[i]),
+            relocation_pending=bool(self.relocation_pending[i]),
+            return_pending=bool(self.return_pending[i]),
+            relocation_request_id=(int(self.relocation_action_id[i]) if self.relocation_pending[i] else None),
+            return_request_id=(int(self.return_action_id[i]) if self.return_pending[i] else None),
+            availability_review_pending=bool(self.availability_review_pending[i]),
             comm_access=self.comm_access(i),
             services_report=None, last_stockout_hours_ago=(self.t - self.last_stockout[i]) if self.last_stockout[i] > -1e9 else None,
             last_purchase_hours_ago=(self.t - self.last_purchase[i]) if self.last_purchase[i] > -1e9 else None,
@@ -420,6 +437,8 @@ class World:
             self.actor_pending[i].add(aid)
             if action.kind == "buy":
                 self.last_purchase_intention[i] = self.t
+            if action.kind == "review" and self.cfg.availability_extension:
+                self.availability_review_pending[i] = True
             self.trace.log(self.t, "action", i, id=aid, kind=action.kind, stage="requested", amount=action.amount,
                            reference=action.reference, payload=action.payload)
             # Positive independent observation-to-intention-to-execution latency.
@@ -497,6 +516,30 @@ class World:
             valid = bool(m and self.comm_access(i) and i in m["recipients"] and m["ttl"] < 2)
             if valid:
                 self.send(i, m["claim"], m["evidence"], m["origin"], m["ttl"] + 1, "all")
+        elif a.kind == "relocate":
+            valid = bool(self.cfg.availability_extension and self.household_local[i] and
+                         not self.relocation_pending[i] and not self.return_pending[i] and
+                         a.payload in {"", "while_unpowered"} and
+                         (a.payload != "while_unpowered" or self.hh_outage_hours[i] > 0))
+            if valid:
+                self.relocation_pending[i] = True
+                self.relocation_action_id[i] = aid
+                self.trace.log(self.t, "availability", i, category="person", transition="relocation_intended",
+                               outage_hours=int(self.hh_outage_hours[i]), target="outside_region",
+                               requested_by="participant_policy", action_id=aid)
+                self.call(self.t + self.rng.uniform(.1, .4), "relocation_depart", i)
+        elif a.kind == "return":
+            valid = bool(self.cfg.availability_extension and not self.household_local[i] and
+                         not self.return_pending[i] and not self.relocation_pending[i])
+            if valid:
+                self.return_pending[i] = True
+                self.return_action_id[i] = aid
+                self.call(self.t + self.rng.uniform(.1, .4), "return_depart", i)
+        elif a.kind == "review":
+            valid = bool(self.cfg.availability_extension and .01 <= a.delay_hours <= 337)
+            self.availability_review_pending[i] = False
+            if valid:
+                self.call(self.t, "availability_review", i)
         elif a.kind == "clinic":
             valid = bool(self.household_local[i]) and i not in self.clinic_waiting and self.t - self.last_clinic_visit[i] > 14 * 24
             if valid:
@@ -508,8 +551,13 @@ class World:
                 self.call(self.t + a.delay_hours, "scheduled_intent", (i, Action(a.payload, amount=a.amount)))
         elif a.kind == "cancel":
             old = self.actions.get(a.reference)
-            valid = bool(old and old[0] == i and old[2] == "requested")
+            valid = bool(old and old[0] == i and
+                         (old[2] == "requested" or
+                          (old[2] in {"accepted", "deferred"} and old[1].kind in {"relocate", "return"})))
             if valid:
+                if old[1].kind == "relocate": self.relocation_pending[i] = False
+                if old[1].kind == "return": self.return_pending[i] = False
+                if old[1].kind == "review": self.availability_review_pending[i] = False
                 self.actions[a.reference] = (old[0], old[1], "cancelled")
                 pending = self.actor_pending.get(i)
                 if pending is not None:
@@ -522,14 +570,15 @@ class World:
             pass
         else:
             valid = False
-        stage = "deferred" if deferred else ("executed" if valid else "rejected")
+        stage = "deferred" if deferred else (("accepted" if a.kind in {"relocate", "return"} else "executed") if valid else "rejected")
         self.actions[aid] = (i, a, stage)
         if valid:
             self.trace.log(self.t, "action", i, id=aid, kind=a.kind, stage="accepted")
-        self.trace.log(self.t, "action", i, id=aid, kind=a.kind, stage=stage)
+        if stage != "accepted":
+            self.trace.log(self.t, "action", i, id=aid, kind=a.kind, stage=stage)
         if not valid:
             self.stats["actions_rejected"] += 1
-        elif not deferred and a.kind not in {"buy", "buy_medicine", "commute", "query"}:
+        elif not deferred and a.kind not in {"buy", "buy_medicine", "commute", "query", "relocate", "return"}:
             self.complete(aid)
 
     def send(self, sender: int, claim: str, evidence: str, origin: int, ttl: int, channel: str):
@@ -836,23 +885,17 @@ class World:
         self.call(self.t + 1, "power")
 
     def availability_power_tick(self):
-        # A household's *own* supply status determines local relocation, not a global
-        # shock multiplier. Departure and return then require actual road capacity.
+        # The engine observes service changes and provides decision opportunities;
+        # only a participant policy may REQUEST a move or return. Other policies
+        # may ignore these observations entirely or choose alternative actions.
         powered = self.power_rank < self.power_ratio[self.zone]
+        newly_interrupted = self.household_local & ~powered & (self.hh_outage_hours == 0)
+        restored_away = ~self.household_local & powered & (self.hh_restored_hours == 0)
+        six_hour_restoration = ~self.household_local & powered & (self.hh_restored_hours == 5)
         self.hh_outage_hours[:] = np.where(powered, 0, self.hh_outage_hours + 1)
         self.hh_restored_hours[:] = np.where(powered, self.hh_restored_hours + 1, 0)
-        departures = np.flatnonzero(self.household_local & ~self.relocation_pending &
-                                    (self.hh_outage_hours >= self.relocation_trigger_h))
-        for i in departures:
-            self.relocation_pending[i] = True
-            self.call(self.t + self.rng.uniform(.1, 1.), "relocation_depart", int(i))
-            self.trace.log(self.t, "availability", int(i), category="person", transition="relocation_intended",
-                           outage_hours=int(self.hh_outage_hours[i]), target="outside_region")
-        # Six restored service hours before return is a C-level timing assumption.
-        returns = np.flatnonzero(~self.household_local & ~self.return_pending & (self.hh_restored_hours >= 6))
-        for i in returns:
-            self.return_pending[i] = True
-            self.call(self.t + self.rng.uniform(.1, 1.), "return_depart", int(i))
+        for i in np.flatnonzero(newly_interrupted | restored_away | six_hour_restoration):
+            self.call(self.t + .01 + self.rng.uniform(0, .03), "decide", int(i))
         for store in range(self.r):
             z = int(self.store_zone[store])
             site = bool(self.store_rank[store] < self.power_ratio[z])
@@ -866,14 +909,31 @@ class World:
             self.store_cumulative_closed_hours[store] += int(not operating)
 
     def relocation_depart(self, i):
+        aid = int(self.relocation_action_id[i])
         if not self.household_local[i] or not self.relocation_pending[i]:
             return
-        if self.hh_outage_hours[i] == 0:
+        # Participant may make its intention conditional on continuing outage.
+        # Alternative policies may submit unconditional relocation requests.
+        action = self.actions.get(aid)
+        if action is None or action[2] in {"cancelled", "expired", "rejected"}:
             self.relocation_pending[i] = False
             return
+        if action[1].payload == "while_unpowered" and self.hh_outage_hours[i] == 0:
+            self.relocation_pending[i] = False
+            self.actions[aid] = (i, action[1], "expired")
+            self.trace.log(self.t, "action", i, id=aid, kind="relocate", stage="expired", reason="condition_no_longer_holds")
+            return
+        # Actual physical road capacity gates the requested departure. A policy
+        # may cancel a deferred attempt before it starts moving.
         if not self.road_trip(int(self.zone[i]), 1, "relocation_arrival", i):
             self.stats["relocation_transport_deferred"] += 1
+            if aid in self.actions:
+                self.actions[aid] = (i, self.actions[aid][1], "deferred")
+                self.trace.log(self.t, "action", i, id=aid, kind="relocate", stage="deferred")
             self.call(self.t + 1, "relocation_depart", i)
+        elif aid in self.actions:
+            self.actions[aid] = (i, self.actions[aid][1], "executed")
+            self.trace.log(self.t, "action", i, id=aid, kind="relocate", stage="executed")
 
     def relocation_arrival(self, i):
         if self.household_local[i] and self.relocation_pending[i]:
@@ -882,16 +942,25 @@ class World:
             self.stats["relocation_completed"] += 1
             self.trace.log(self.t, "availability", i, category="person", transition="outside_region",
                            interpretation="temporarily absent from local modeled roles; no health outcome")
+            self.complete(int(self.relocation_action_id[i]))
 
     def return_depart(self, i):
+        aid = int(self.return_action_id[i])
         if self.household_local[i] or not self.return_pending[i]:
             return
-        if self.hh_restored_hours[i] < 6:
+        action = self.actions.get(aid)
+        if action is None or action[2] in {"cancelled", "expired", "rejected"}:
             self.return_pending[i] = False
             return
         if not self.road_trip(int(self.zone[i]), 1, "return_arrival", i):
             self.stats["return_transport_deferred"] += 1
+            if aid in self.actions:
+                self.actions[aid] = (i, self.actions[aid][1], "deferred")
+                self.trace.log(self.t, "action", i, id=aid, kind="return", stage="deferred")
             self.call(self.t + 1, "return_depart", i)
+        elif aid in self.actions:
+            self.actions[aid] = (i, self.actions[aid][1], "executed")
+            self.trace.log(self.t, "action", i, id=aid, kind="return", stage="executed")
 
     def return_arrival(self, i):
         if not self.household_local[i] and self.return_pending[i]:
@@ -900,6 +969,7 @@ class World:
             self.hh_outage_hours[i] = 0
             self.stats["relocation_returned"] += 1
             self.trace.log(self.t, "availability", i, category="person", transition="returned_local")
+            self.complete(int(self.return_action_id[i]))
 
     def services(self):
         # Only continuity/capacity; no individual clinical outcomes are inferred.
@@ -979,7 +1049,7 @@ class World:
         if self.balance[self.utility] >= self.n * 100:
             self.transfer(self.utility, self.gov, self.n * 100, "utility_contract")
         self.attended[:] = 0
-        self.actions = {aid: item for aid, item in self.actions.items() if item[2] in {"requested", "deferred", "executed"} and (item[1].kind in {"buy", "buy_medicine", "commute", "query", "schedule"} or item[2] == "requested")}
+        self.actions = {aid: item for aid, item in self.actions.items() if item[2] in {"requested", "accepted", "deferred", "executed"} and (item[1].kind in {"buy", "buy_medicine", "commute", "query", "schedule", "relocate", "return"} or item[2] == "requested")}
         if self.cfg.invariant_every_day:
             self.invariants()
         row = self.snapshot()
@@ -1052,6 +1122,9 @@ class World:
                 t, _, _, kind, payload = heapq.heappop(self.events)
                 self.t = t
                 if kind == "decide": self.decide(payload)
+                elif kind == "availability_review":
+                    self.availability_review_pending[payload] = False
+                    self.decide(payload)
                 elif kind == "action": self.action(payload)
                 elif kind == "action_retry":
                     if payload in self.actions:

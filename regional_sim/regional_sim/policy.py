@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 from typing import Protocol, Tuple, Mapping, Any
 import random
+import math
 
 @dataclass(frozen=True)
 class MessageView:
@@ -36,6 +37,15 @@ class Observation:
     medicine_price_cents: int
     shop_stock_report: float | None
     power_at_home: bool | None
+    availability_enabled: bool
+    home_outage_hours: int
+    home_restored_hours: int
+    relocation_preference_threshold_hours: float
+    relocation_pending: bool
+    return_pending: bool
+    relocation_request_id: int | None
+    return_request_id: int | None
+    availability_review_pending: bool
     comm_access: bool
     services_report: str | None
     last_stockout_hours_ago: float | None
@@ -66,6 +76,28 @@ class ScriptedPolicy:
     """Illustrative, explicitly C-level household heuristic; no privileged world access."""
     def decide(self, o: Observation, rng: random.Random) -> list[Action]:
         actions: list[Action] = []
+        # Relocation is a policy choice, not an automatic world-state transition.
+        # This *individual* synthetic threshold is drawn from the two survey
+        # stated-response anchors. The policy sees only its own outage history.
+        # No unsupported causal effect of other people's messages on relocation
+        # is assumed. Other policies may use received messages differently.
+        if o.availability_enabled:
+            if (o.locally_present and not o.relocation_pending and
+                    o.home_outage_hours > 0 and
+                    o.home_outage_hours >= o.relocation_preference_threshold_hours):
+                actions.append(Action("relocate", payload="while_unpowered"))
+            elif (o.locally_present and not o.relocation_pending and
+                  o.home_outage_hours > 0 and not o.availability_review_pending and
+                  math.isfinite(o.relocation_preference_threshold_hours) and
+                  o.home_outage_hours < o.relocation_preference_threshold_hours):
+                # Request a future observation at the next power tick that will
+                # pass the participant's threshold; no global hourly decision loop.
+                future = math.ceil(o.relocation_preference_threshold_hours) - o.home_outage_hours
+                if future > 0:
+                    actions.append(Action("review", delay_hours=float(future) + .05))
+            if (not o.locally_present and not o.return_pending and
+                    o.home_restored_hours >= 6):
+                actions.append(Action("return"))  # Six hours is a C-level heuristic.
         reinforced = o.current_claim_exposures.get("retail_stockout", 0) >= o.adoption_threshold
         desired = o.grocery_need_daily * (4.0 if reinforced else 2.5)
         opening_delay = (rng.uniform(.1, .65) if 8 <= o.time % 24 <= 20.5

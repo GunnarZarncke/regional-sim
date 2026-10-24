@@ -1,3 +1,5 @@
+**Archive notice:** This document reports 0.1.0 results. They were NOT regenerated under 0.3.1-dev. Current participant-relocation tests and calibration checks are in `docs/participant_communication.md` and `calibration/availability_results.json`.
+
 # Internal validation and measured results — RegionalSim 0.1.0
 
 **Status:** executable research prototype, **not an externally calibrated or scientifically validated release**. All figures below are simulator outputs, not forecasts or observed Columbus estimates. Geography is a synthetic zone representation of Columbus, OH CBSA 18140 with a 2024 nominal reference period. Reproduction: `python -m unittest discover -s tests -v`, `python scripts/validate.py`, and the commands in `README.md`.

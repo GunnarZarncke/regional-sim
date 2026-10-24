@@ -24,7 +24,7 @@ simulator plus one protocol.
 | [`INSTRUCTIONS.md`](INSTRUCTIONS.md) | Mission, **world-freeze bar** (magnitudes, human-baseline coupling, no required catastrophe), experiment discipline |
 | [`AGENTS.md`](AGENTS.md) | Agent working rules |
 
-[`regional_sim/`](regional_sim/) — RegionalSim **0.3.0-dev** (operational availability; no modeled mortality). Not validated or frozen. Version history: [`versions/`](versions/).
+[`regional_sim/`](regional_sim/) — RegionalSim **0.3.1-dev** (policy-controlled relocation; peer messages affect baseline stockpiling only). Not validated or frozen. Version history: [`versions/`](versions/).
 
 ## Working with agents
 

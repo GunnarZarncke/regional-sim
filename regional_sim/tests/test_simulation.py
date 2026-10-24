@@ -264,3 +264,107 @@ class OperationalDependencyTests(unittest.TestCase):
         self.assertGreater(s2['relocation_transport_deferred'], 0)
         self.assertEqual(s2['people_locally_present'], 1200)
         a.invariants(); b.invariants()
+
+class PolicyOwnershipAndSocialCausalityTests(unittest.TestCase):
+    def test_world_never_relocates_if_policy_does_not_request_it(self):
+        class Stay:
+            def decide(self, o, rng):
+                return [Action('none')]
+        w = World(Config(households=480, days=3, trace='',
+                         extra_shocks=(Shock(0., 'power', -1, 0., 36.),)), policy=Stay())
+        end = w.run()
+        self.assertEqual(end['relocation_completed'], 0)
+        self.assertEqual(end['people_temporarily_away'], 0)
+        self.assertGreater(end['power_unserved_household_hours'], 0)
+
+    def test_custom_policy_can_request_relocation_without_outage(self):
+        class Independent:
+            def decide(self, o, rng):
+                return [Action('relocate')] if o.locally_present and not o.relocation_pending else [Action('none')]
+        w = World(Config(households=80, days=1, trace=''), policy=Independent())
+        end = w.run()
+        self.assertGreater(end['relocation_completed'], 0)
+        w.invariants()
+
+    def test_baseline_policy_consumes_independent_stockout_messages(self):
+        from dataclasses import replace
+        from regional_sim.policy import ScriptedPolicy
+        import random
+        w = world(n=100)
+        o = replace(w.obs(0), groceries=0., household_size=2, grocery_need_daily=1.,
+                    balance_cents=50000, cash_cents=0, time=10.,
+                    availability_enabled=False, pending_grocery_purchase=False,
+                    current_claim_exposures={'retail_stockout': 0}, adoption_threshold=2)
+        ordinary = ScriptedPolicy().decide(o, random.Random(31))
+        reinforced = ScriptedPolicy().decide(replace(o, current_claim_exposures={'retail_stockout':2}), random.Random(31))
+        self.assertEqual(next(a.amount for a in ordinary if a.kind == 'buy'), 2.5)
+        self.assertEqual(next(a.amount for a in reinforced if a.kind == 'buy'), 4.)
+        w.trace.close()
+
+    def test_power_message_does_not_force_baseline_relocation(self):
+        from dataclasses import replace
+        from regional_sim.policy import ScriptedPolicy
+        import random
+        w = world(n=100)
+        o = replace(w.obs(0), time=12., home_outage_hours=0,
+                    current_claim_exposures={'power_interruption':3},
+                    relocation_preference_threshold_hours=2., power_at_home=True)
+        acts = ScriptedPolicy().decide(o, random.Random(5))
+        self.assertNotIn('relocate', [a.kind for a in acts])
+        w.trace.close()
+
+    def test_policy_can_cancel_a_transport_deferred_move(self):
+        w = world(n=100)
+        w.t = 10.
+        i=0
+        aid=5000
+        w.actions[aid]=(i,Action('relocate'),'requested')
+        w.action(aid)
+        self.assertTrue(w.relocation_pending[i])
+        self.assertIn(aid, w.obs(i).pending_action_ids)
+        w.actions[aid]=(i,Action('relocate'),'deferred')
+        w.actions[aid+1]=(i,Action('cancel',reference=aid),'requested')
+        w.action(aid+1)
+        self.assertFalse(w.relocation_pending[i])
+        w.relocation_depart(i)
+        self.assertTrue(w.household_local[i])
+        w.trace.close()
+
+    def test_actual_delivered_social_claims_change_purchase_intention(self):
+        from dataclasses import replace
+        from regional_sim.policy import ScriptedPolicy
+        import random
+        w = world(n=100)
+        i = 0
+        w.attention[i] = 1.
+        w.internet[i] = True
+        w.comm_up[:] = True
+        w.threshold[i] = 2
+        before = replace(w.obs(i), time=10., groceries=0., grocery_need_daily=1.,
+                         balance_cents=50000, cash_cents=0, availability_enabled=False,
+                         pending_grocery_purchase=False)
+        for mid, origin in ((1, 19), (2, 20)):
+            w.messages[mid] = dict(id=mid, sender=origin, origin=origin, created=8.,
+                                   claim='retail_stockout', evidence='firsthand', ttl=0, recipients=set())
+            w.deliver((mid,i,'close'))
+        after = replace(w.obs(i), time=10., groceries=0., grocery_need_daily=1.,
+                        balance_cents=50000, cash_cents=0, availability_enabled=False,
+                        pending_grocery_purchase=False)
+        self.assertEqual(after.current_claim_exposures.get('retail_stockout'),2)
+        b=ScriptedPolicy().decide(before,random.Random(7));a=ScriptedPolicy().decide(after,random.Random(7))
+        self.assertEqual(next(x.amount for x in b if x.kind=='buy'),2.5)
+        self.assertEqual(next(x.amount for x in a if x.kind=='buy'),4.)
+        w.trace.close()
+
+    def test_accepted_relocation_survives_daily_cleanup(self):
+        w = world(n=100)
+        i, aid = 0, 9000
+        w.t = 23.95
+        w.actions[aid] = (i, Action('relocate'), 'requested')
+        w.action(aid)
+        self.assertEqual(w.actions[aid][2], 'accepted')
+        w.t = 24.
+        w.daily()
+        self.assertEqual(w.actions[aid][2], 'accepted')
+        self.assertTrue(w.relocation_pending[i])
+        w.trace.close()

@@ -20,3 +20,7 @@ See `docs/calibration.md`. Only ACS travel duration (metric-incompatible commute
 
 ## 0.3.0-dev availability extension
 See `docs/operational_availability.md`. Actual historical responses are not equated with survey choices, property functionality with structural safety, or temporary absence with death. C-level assumptions include elapsed-time interpolation, outside-region resource boundary, return timing, SMB-to-retail transfer and unmodeled adaptation after day one. Do not interpret long-run firm closure or residence habitability using this extension.
+
+## 0.3.1-dev participant policy and communications
+
+Relocation is now policy-owned with an individual survey-proxy preference threshold; no policy request means no move. Simulated messages can change the baseline grocery target following independent stockout reports, but **there is no calibrated communication effect on relocation**. Both the 2.5-to-4-day response and most network contact/trust/attention/propagation rates are C-level assumptions. Stated blackout response scenarios also communicate an expected restoration horizon, unlike the script which acts on elapsed observed outage; this is a transfer limitation. Outside-region resources and realistic return decisions remain outside the modeled boundary.

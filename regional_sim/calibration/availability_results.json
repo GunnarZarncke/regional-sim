@@ -11,14 +11,14 @@
       "seed": 41,
       "n": 2400,
       "retailers": 120,
-      "first_day_away_fraction": 0.33541666666666664,
-      "last_affected_day_away_fraction": 0.33541666666666664,
+      "first_day_away_fraction": 0.33,
+      "last_affected_day_away_fraction": 0.33,
       "first_day_power_closed_retail_fraction": 0.42500000000000004,
       "first_day_grid_unavailable_site_fraction": 1.0,
       "relocations_completed": 822,
       "returns_completed": 822,
       "last_away_count": 0,
-      "outside_region_grocery_need_units": 1052.8,
+      "outside_region_grocery_need_units": 1034.05,
       "goods_conservation_error_max": 7.275957614183426e-12
     },
     {
@@ -26,94 +26,94 @@
       "seed": 42,
       "n": 2400,
       "retailers": 120,
-      "first_day_away_fraction": 0.31833333333333336,
-      "last_affected_day_away_fraction": 0.31833333333333336,
+      "first_day_away_fraction": 0.31666666666666665,
+      "last_affected_day_away_fraction": 0.31666666666666665,
       "first_day_power_closed_retail_fraction": 0.44999999999999996,
       "first_day_grid_unavailable_site_fraction": 1.0,
       "relocations_completed": 780,
       "returns_completed": 780,
       "last_away_count": 0,
-      "outside_region_grocery_need_units": 1013.75,
-      "goods_conservation_error_max": 1.8189894035458565e-11
+      "outside_region_grocery_need_units": 1008.25,
+      "goods_conservation_error_max": 1.0913936421275139e-11
     },
     {
       "duration_hours": 24,
       "seed": 43,
       "n": 2400,
       "retailers": 120,
-      "first_day_away_fraction": 0.3325,
-      "last_affected_day_away_fraction": 0.3325,
+      "first_day_away_fraction": 0.3304166666666667,
+      "last_affected_day_away_fraction": 0.3304166666666667,
       "first_day_power_closed_retail_fraction": 0.5,
       "first_day_grid_unavailable_site_fraction": 1.0,
-      "relocations_completed": 816,
-      "returns_completed": 816,
+      "relocations_completed": 815,
+      "returns_completed": 815,
       "last_away_count": 0,
-      "outside_region_grocery_need_units": 1074.85,
-      "goods_conservation_error_max": 7.219114195322618e-12
+      "outside_region_grocery_need_units": 1064.3,
+      "goods_conservation_error_max": 6.536993168992922e-12
     },
     {
       "duration_hours": 336,
       "seed": 41,
       "n": 2400,
       "retailers": 120,
-      "first_day_away_fraction": 0.33541666666666664,
-      "last_affected_day_away_fraction": 0.8341666666666666,
+      "first_day_away_fraction": 0.33,
+      "last_affected_day_away_fraction": 0.83375,
       "first_day_power_closed_retail_fraction": 0.42500000000000004,
       "first_day_grid_unavailable_site_fraction": 1.0,
       "relocations_completed": 2002,
       "returns_completed": 2002,
       "last_away_count": 0,
-      "outside_region_grocery_need_units": 28413.0,
-      "goods_conservation_error_max": 3.637978807091713e-11
+      "outside_region_grocery_need_units": 28384.25,
+      "goods_conservation_error_max": 6.548361852765083e-11
     },
     {
       "duration_hours": 336,
       "seed": 42,
       "n": 2400,
       "retailers": 120,
-      "first_day_away_fraction": 0.31833333333333336,
-      "last_affected_day_away_fraction": 0.8191666666666667,
+      "first_day_away_fraction": 0.31666666666666665,
+      "last_affected_day_away_fraction": 0.81875,
       "first_day_power_closed_retail_fraction": 0.44999999999999996,
       "first_day_grid_unavailable_site_fraction": 1.0,
       "relocations_completed": 1967,
       "returns_completed": 1967,
       "last_away_count": 0,
-      "outside_region_grocery_need_units": 27700.3,
-      "goods_conservation_error_max": 7.389644451905042e-12
+      "outside_region_grocery_need_units": 27685.55,
+      "goods_conservation_error_max": 1.4551915228366852e-11
     },
     {
       "duration_hours": 336,
       "seed": 43,
       "n": 2400,
       "retailers": 120,
-      "first_day_away_fraction": 0.3325,
-      "last_affected_day_away_fraction": 0.83625,
+      "first_day_away_fraction": 0.3304166666666667,
+      "last_affected_day_away_fraction": 0.8366666666666667,
       "first_day_power_closed_retail_fraction": 0.5,
       "first_day_grid_unavailable_site_fraction": 1.0,
       "relocations_completed": 2008,
       "returns_completed": 2008,
       "last_away_count": 0,
-      "outside_region_grocery_need_units": 28721.3,
-      "goods_conservation_error_max": 2.1827872842550278e-11
+      "outside_region_grocery_need_units": 28682.7,
+      "goods_conservation_error_max": 2.9103830456733704e-11
     }
   ],
   "mean_checks": {
     "24h": {
       "stated_intent_target": 0.33,
-      "simulated_last_affected_day_away_fraction_mean": 0.32875,
+      "simulated_last_affected_day_away_fraction_mean": 0.32569444444444445,
       "simulated_last_affected_day_away_fraction_range": [
-        0.31833333333333336,
-        0.33541666666666664
+        0.31666666666666665,
+        0.3304166666666667
       ],
       "simulated_first_day_firm_power_closed_fraction_mean": 0.4583333333333333,
       "all_returned_at_end": true
     },
     "336h": {
       "stated_intent_target": 0.83,
-      "simulated_last_affected_day_away_fraction_mean": 0.8298611111111112,
+      "simulated_last_affected_day_away_fraction_mean": 0.8297222222222222,
       "simulated_last_affected_day_away_fraction_range": [
-        0.8191666666666667,
-        0.83625
+        0.81875,
+        0.8366666666666667
       ],
       "simulated_first_day_firm_power_closed_fraction_mean": 0.4583333333333333,
       "all_returned_at_end": true

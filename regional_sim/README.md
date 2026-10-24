@@ -1,4 +1,4 @@
-# RegionalSim 0.3.0-dev — synthetic Columbus metropolitan prototype
+# RegionalSim 0.3.1-dev — synthetic Columbus metropolitan prototype
 
 An open-source, event-driven, six-domain regional socioeconomic simulation. **Research prototype with partial proxy calibration; not independently validated or operationally certified.** It does not infer death, illness severity, or any policy's desired outcome.
 
@@ -48,9 +48,9 @@ w = World(Config(households=10000, days=7, trace="my-trace.ndjson"), policy=Exam
 print(w.run())
 ```
 
-Policy code receives only frozen participant observations (with personal balances/inventory, on-site observations, access-gated requested data, received messages and pending request IDs) and an RNG. The engine owns all account balances, inventory, transport reservations, message routing and the event queue. Policies may emit **lists of ordinary actions**, including `buy`, `buy_medicine`, `commute`, `pay_bill`, `clinic`, `query`, `send`, `forward`, `ask`, `agree`, `disagree`, `intended_message`, `completed_message`, `schedule`, `cancel`, or `none`. The world validates claims, eligibility, capacity, ownership, information access and transaction feasibility. Future comparison-policy objectives do not exist in the model.
+Policy code receives only frozen participant observations (with personal balances/inventory, on-site observations, access-gated requested data, received messages and pending request IDs) and an RNG. The engine owns all account balances, inventory, transport reservations, message routing and the event queue. Policies may emit **lists of ordinary actions**, including `buy`, `buy_medicine`, `commute`, `pay_bill`, `clinic`, `query`, `send`, `forward`, `ask`, `agree`, `disagree`, `intended_message`, `completed_message`, `relocate`, `return`, `review`, `schedule`, `cancel`, or `none`. The world validates claims, eligibility, capacity, ownership, information access and transaction feasibility. Future comparison-policy objectives do not exist in the model.
 
-See `docs/technical.md` for all action semantics, conservation equations and domain couplings; `provenance.json` for 66 parameter/source records; `docs/limitations.md` for failures and gaps; `reports/validation.md` for actual measurements. Run `python scripts/validate.py` to generate paired-seed comparison outputs and domain shock smoke checks.
+See `docs/technical.md` for all action semantics, conservation equations and domain couplings; `provenance.json` for 69 parameter/source records; `docs/limitations.md` for failures and gaps; `reports/validation.md` for actual measurements. Run `python scripts/validate.py` to generate paired-seed comparison outputs and domain shock smoke checks.
 
 ## Status
 
@@ -82,3 +82,42 @@ regional-sim --config configs/development.json --no-availability --out output/ab
 ```
 
 See [docs/operational_availability.md](docs/operational_availability.md), `benchmarks/availability_observations.json` and `calibration/availability_results.json` for fitted survey endpoints, actual blackout and hurricane comparators *not* fitted, three-seed checks and all gaps. These are **not independently historically validated**; physical buildings have no damage or safety state. Prior example output folders and `calibration/results.json` were generated with the earlier 0.2.0-dev version; re-run them to compare model versions.
+
+## Participant-controlled relocation and communication (0.3.1-dev)
+
+**Breaking API extension:** `Observation` now exposes the participant's own consecutive
+outage/restoration hours, private survey-proxy preference threshold, relocation/return
+request IDs, pending state, and availability-module status. `Action("relocate")` and
+`Action("return")` are **requested by the participant policy**, never autonomously
+selected by the engine. A baseline scripted relocation has
+`Action("relocate", payload="while_unpowered")`, which expires before departure if
+home power is restored; alternative policies may issue unconditional actions.
+Roads can defer departures/returns and queued requests can be cancelled until
+travel actually begins. `Action("review", delay_hours=...)` requests a future
+participant decision without synchronizing all households to the grid clock.
+Electricity state changes only notify policies; `--no-availability` rejects movement.
+
+Actual delivered stockout reports **can affect** baseline grocery purchasing:
+`current_claim_exposures["retail_stockout"] >= adoption_threshold` switches the desired
+stock from 2.5 to 4 days. The engine counts **distinct original sources**, not repeats
+of the same forwarded message. Participant decisions also affect what gets reported,
+asked and forwarded; messages are delayed and access/attention-gated. **There is no
+calibrated effect of social messages on baseline relocation**: its survey-proxy
+propensity uses only the participant's own observed loss of power. Custom policies
+may use personal messages and exposure counts to make relocation decisions, but
+such response coefficients would be experimental C-level assumptions.
+
+Evidence: Centola (2010), DOI 10.1126/science.1185231, demonstrates an experimentally
+identified complex-contagion mechanism for online health-tool adoption (roughly
+54% clustered versus 38% randomized groups), **not** stockout or relocation effects.
+Sadus, Göttmann & Schubert (2023), DOI 10.1007/s10389-022-01727-x, observed an
+association of descriptive social norms with self-reported stockpiling among 861
+German respondents during COVID-19; this is not a causal numerical calibration.
+Sue Wing et al. (2025), DOI 10.1038/s41467-025-58537-4, supply *hypothetical*
+blackout relocation intention anchors (33% at 1 day; 83% at 14 days), not actual
+completed moves or a peer-message effect. Most timing, trust, message-delivery and
+consumption-response parameters therefore remain synthetic. See
+`docs/participant_communication.md` and regenerated `calibration/availability_results.json`.
+
+Run `python -m unittest discover -s tests -v` and
+`python -m scripts.validate_availability` to reproduce version-specific results.

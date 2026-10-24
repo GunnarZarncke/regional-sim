@@ -2,14 +2,12 @@
 
 ## Open work
 
-- Move household relocation onto the **policy API** (noted in
-  `docs/operational_availability.md`).
-- Close remaining **world freeze bar** gaps (`INSTRUCTIONS.md`) beyond 0.3.0-dev
-  survey anchors.
-- Commit 0.3.0-dev + `drafts/model-catastrophic-effects.md` when ready.
+- Close remaining **world freeze bar** gaps (`INSTRUCTIONS.md`): FDIC-style
+  finance heterogeneity, independent domain benchmarks, broader communication
+  evidence if baseline should depend on peers beyond stockout adoption.
+- Commit 0.3.1-dev when ready.
 
 ## Recently shipped
 
-- **0.3.0-dev** operational availability (replaces 0.2.0-dev live tree); version
-  doc and artifact under `versions/`.
-- Blinded review: `drafts/model-catastrophic-effects.md`.
+- **0.3.1-dev** participant-policy relocation + communication audit doc.
+- Prior: 0.3.0-dev availability, 0.2.0-dev calibration (`versions/`).

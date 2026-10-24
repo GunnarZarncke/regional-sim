@@ -844,7 +844,7 @@
     "bibliographic_source": "Sue Wing, I., Larsen, P. H., Carvallo, J. P., et al. (2025). A method to estimate the economy-wide consequences of widespread, long duration electric power interruptions. Nature Communications, 16, 3335. https://doi.org/10.1038/s41467-025-58537-4",
     "url": "https://www.nature.com/articles/s41467-025-58537-4",
     "applicability": "Synthetic Columbus households",
-    "transformation": "Fit two stated hypothetical-duration proportions; mapping to elapsed hours and actual action is assumption",
+    "transformation": "Fit stated-response anchors; ScriptedPolicy, not the engine, chooses relocation upon observing own outage; mapping hypothetical duration to elapsed hours is assumed",
     "validation": "Check anchor equations, transport-constrained completed departures, alternative seed variation",
     "limitation": "Not a health, survival or habitability threshold"
   },
@@ -936,5 +936,47 @@
     "transformation": "Local inventory remains owned and unconsumed; outside needs logged but NOT claimed met",
     "validation": "Goods and money conservation, positive outside need only if away",
     "limitation": "No lodging capacity, cross-region resource purchases, care outcomes or housing destination constraints"
+  },
+  {
+    "domain": "communications",
+    "parameter": "social cues and stockpiling association (context only)",
+    "unit": "observed survey association",
+    "evidence_category": "A",
+    "estimate": "descriptive norms associated with stockpiling; no transferable numeric coefficient",
+    "uncertainty": "Unestimated transfer to Columbus and non-pandemic shocks",
+    "bibliographic_source": "Sadus, K., Göttmann, J., & Schubert, A.-L. (2023). Predictors of stockpiling behavior during the COVID-19 pandemic in Germany. Journal of Public Health, 31, 1717–1733. https://doi.org/10.1007/s10389-022-01727-x",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/35910092/",
+    "applicability": "861 German online survey participants in 2020",
+    "transformation": "Evidence of association, not causal proof or a numerical calibrator for synthetic stockout messages",
+    "validation": "A domain-matched calibration remains outstanding",
+    "limitation": "NOT used to fit threshold distribution or 2.5-to-4-day purchasing increase"
+  },
+  {
+    "domain": "policy",
+    "parameter": "participant-triggered temporary relocation",
+    "unit": "decision rule",
+    "evidence_category": "C",
+    "estimate": "ScriptedPolicy requests relocate when its observed consecutive outage hours cross its private survey-proxy preference; optional while_unpowered condition",
+    "uncertainty": "Stated choice versus actual executed behavior, outside-region accommodation and alternatives",
+    "bibliographic_source": "Sue Wing, I., Larsen, P. H., Carvallo, J. P., et al. (2025). A method to estimate the economy-wide consequences of widespread, long duration electric power interruptions. Nature Communications, 16, 3335. https://doi.org/10.1038/s41467-025-58537-4",
+    "url": "https://www.nature.com/articles/s41467-025-58537-4",
+    "applicability": "Synthetic Columbus participants",
+    "transformation": "World engine observes grid state and allocates roads but does not choose who relocates; different policies may abstain or move for other reasons",
+    "validation": "NoMove and custom relocation-policy regression checks",
+    "limitation": "No calibrated social-information effect on relocation"
+  },
+  {
+    "domain": "policy",
+    "parameter": "availability review and return timing",
+    "unit": "hours",
+    "evidence_category": "C",
+    "estimate": "Immediate policy notification of own service change; participant-scheduled threshold review; scripted return after six restored hours",
+    "uncertainty": "Observation access and return delays uncalibrated",
+    "bibliographic_source": "Uncalibrated synthetic modelling assumption; no observational source.",
+    "url": null,
+    "applicability": "Synthetic participant event scheduling",
+    "transformation": "Scheduled observations support asynchronous decisions without engine-imposed relocation; arrival requires road travel",
+    "validation": "Test 24h/336h response anchors and transport coupling",
+    "limitation": "No weather forecast or communicated expected restoration time"
   }
 ]

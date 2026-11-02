@@ -4,3 +4,7 @@ __pycache__/
 
 *.egg-info/
 .vscode/
+
+# Run outputs (regenerate with regional-sim); do not commit large NDJSON traces
+regional_sim/reports/**/traces.ndjson
+regional_sim/output/

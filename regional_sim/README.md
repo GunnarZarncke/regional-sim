@@ -30,7 +30,7 @@ Domains: `power`, `road`, `road_closure` (opt-in targeted main corridor), `commu
 
 ## Outputs
 
-Each run writes `daily.csv` (cumulative and daily-state metrics), `summary.json` (configuration, result, event counts, a network-clustering sample), and `traces.ndjson`. The NDJSON contains observations, requested/accepted/executed/completed actions, purchases, goods and payment transfers, deliveries, messages, individual behavioral adoption, protection/other institutional events, shocks and daily state snapshots. Personal records are **sampled deterministically by agent ID** unless `--full-trace` is supplied; all aggregate and institutional records are kept. `--sample-rate 0` suppresses personal traces, not their aggregate event counts. Never treat a sampled NDJSON as a full individual event census.
+Each run writes `daily.csv` (cumulative and daily-state metrics), `summary.json` (configuration, result, event counts, a network-clustering sample), and `traces.ndjson` (local only; not committed—see `docs/report_artifacts.md`). The NDJSON contains observations, requested/accepted/executed/completed actions, purchases, goods and payment transfers, deliveries, messages, individual behavioral adoption, protection/other institutional events, shocks and daily state snapshots. Personal records are **sampled deterministically by agent ID** unless `--full-trace` is supplied; all aggregate and institutional records are kept. `--sample-rate 0` suppresses personal traces, not their aggregate event counts. Never treat a sampled NDJSON as a full individual event census.
 
 ## Replacing participants' policies
 

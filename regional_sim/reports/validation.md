@@ -29,7 +29,7 @@ The checked-in `reports/routine_10000_30d/` was produced with 10,000 individuall
 
 ## Paired software response experiment
 
-Four matched independent RNG seeds (42–45); 10,000 households, five days each, ordinary operation compared with a synthetic **24-hour 0.35 regional electric supply multiplier beginning at simulated hour 25**. These are intervention-vs-baseline *within-simulator differences*, mean ± sample standard deviation across seeds, **not statistical confidence intervals or empirical effect estimates**. Full runs and machine-readable results are in `reports/internal_validation.json`; detailed seed-42 traces are in the `routine_10000_5d/` and `power_10000_5d/` directories.
+Four matched independent RNG seeds (42–45); 10,000 households, five days each, ordinary operation compared with a synthetic **24-hour 0.35 regional electric supply multiplier beginning at simulated hour 25**. These are intervention-vs-baseline *within-simulator differences*, mean ± sample standard deviation across seeds, **not statistical confidence intervals or empirical effect estimates**. Full runs and machine-readable results are in `reports/internal_validation.json`. Seed-42 NDJSON traces for the five-day paired runs are **not** stored in git; regenerate with `docs/report_artifacts.md`.
 
 | Accumulated metric | Disrupted minus baseline, mean ± sample SD (n=4) |
 |---|---:|

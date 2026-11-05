@@ -102,6 +102,15 @@ is checked for transport→freight, payments→declines, and power→retail
 [`regional_sim/docs/coupling_checks.md`](regional_sim/docs/coupling_checks.md)
 and `regional_sim/calibration/coupling_results.json`.
 
+#### Parameter freeze (0.5.1)
+
+As of 2026-11-05, world-model numeric defaults and packaged calibration
+artifacts are locked in
+[`regional_sim/configs/frozen_world_parameters.json`](regional_sim/configs/frozen_world_parameters.json).
+Changing them requires a new version string and an updated freeze record.
+**This does not satisfy the world freeze bar above** (magnitudes,
+heterogeneity, and held-out validation remain open).
+
 #### 3. Release without requiring catastrophe
 
 World acceptance means empirical fidelity (within stated uncertainty),

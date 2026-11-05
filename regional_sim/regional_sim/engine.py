@@ -970,7 +970,7 @@ class World:
         if self.cfg.availability_extension:
             self.availability_power_tick()
         # Refrigeration continuity: tiny explicitly accounted-for loss after sustained
-        # store power failure. Rate and six-hour duration are C assumptions.
+        # store power failure. Rate and four-hour duration are C assumptions.
         if "power_to_retail" not in self.disabled:
             for store in range(self.r):
                 z = int(self.store_zone[store])

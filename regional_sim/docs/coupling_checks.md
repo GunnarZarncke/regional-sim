@@ -36,7 +36,7 @@ Household `insufficient_funds` is a budget outcome, not this coupling. Retailer 
 
 ## Power → retail
 
-Stores close when `power_to_retail` is on and the feeder is unpowered. Refrigerated grocery spoils at a **C-level** 0.0006 per hour after six unpowered hours.
+Stores close when `power_to_retail` is on and the feeder is unpowered. Refrigerated grocery spoils at a **C-level** 0.0006 per hour after four unpowered hours (frozen at 0.5.1).
 
 | Check | Expected direction | Magnitude |
 |-------|--------------------|-----------|

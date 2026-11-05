@@ -1,11 +1,14 @@
 {
   "name": "RegionalSim",
-  "version": "0.5.0-dev",
-  "date": "2026-10-24",
-  "status": "scripted-human coupling direction checks recorded; finance and markets scope refuse; magnitudes uncalibrated; no medical outcome calibration",
+  "version": "0.5.1",
+  "date": "2026-11-05",
+  "status": "world parameters frozen at 0cceb2a; coupling direction checks; finance scope refuse; magnitudes and independent validation not claimed",
+  "parameters_frozen": true,
+  "parameters_freeze_record": "configs/frozen_world_parameters.json",
   "reference_region": "Columbus OH CBSA 18140",
   "reference_period": "2024",
   "independent_empirical_validation_passed": false,
+  "world_freeze_bar_met": false,
   "large_configuration_initializes": true,
   "million_household_full_run_verified": false
 }

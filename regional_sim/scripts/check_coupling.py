@@ -102,7 +102,7 @@ def main():
             ],
             "direction_holds": retail_ok,
             "magnitude": "gap",
-            "spoilage_rate": "C-level 0.0006/hour after six unpowered hours; not fitted",
+            "spoilage_rate": "C-level 0.0006/hour after four unpowered hours; not fitted",
         },
         "finance_and_markets": {
             "status": "scope_refuse",

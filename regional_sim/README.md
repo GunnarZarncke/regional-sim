@@ -1,4 +1,4 @@
-# RegionalSim 0.5.0-dev — synthetic Columbus metropolitan prototype
+# RegionalSim 0.5.1 — synthetic Columbus metropolitan prototype
 
 An open-source, event-driven, six-domain regional socioeconomic simulation. **Research prototype with partial proxy calibration; not independently validated or operationally certified.** It does not infer death, illness severity, or any policy's desired outcome.
 
@@ -135,6 +135,10 @@ To reproduce the new 10,000-household road closure with trace records:
 ```bash
 regional-sim --households 10000 --days 3 --seed 47 --shock-json configs/road_closure_information.json --no-availability --sample-rate 0.002 --out output/road_closure
 ```
+
+## Version 0.5.1: frozen world parameters
+
+Numeric defaults and packaged calibration configs are locked; see `docs/frozen_parameters.md` and `configs/frozen_world_parameters.json`. This is not the full validated world release.
 
 ## Version 0.5.0-dev: scripted-human coupling checks
 

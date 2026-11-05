@@ -3,13 +3,12 @@
 ## Open work
 
 - Independent validation of Fix I-5 → Columbus travel-information transfer.
-- Coupling **magnitudes** remain gaps.
-- Provenance pass for C-parameter contextual sources (`drafts/2026-11-04-c-parameter-evidence-scan.md`).
-- Optional: split 24 h card hold to retail/medicine only (wholesale/utility on ACH).
-- World freeze bar still not met; do not start the AI experiment.
+- Coupling **magnitudes** remain gaps; **world freeze bar** not met.
+- Provenance pass for remaining C parameters (`drafts/2026-11-04-c-parameter-evidence-scan.md`).
+- Optional: split 24 h card hold to retail/medicine only.
+- Do not start the AI experiment until world freeze bar is explicitly accepted (parameter freeze ≠ world freeze).
 
 ## Recently shipped
 
-- Evidence-informed engine parameters (employment, remote, 1-day card hold, spoilage delay, water, utility bill); Columbus `free_flow_minutes` default 24.0; refit `calibrated_2024.json` → 23.702395.
-- **0.5.0-dev** coupling checks and finance scope refuse.
-- Session logs: `drafts/2026-11-04-*.md`.
+- **0.5.1 parameter freeze:** `configs/frozen_world_parameters.json`, `docs/frozen_parameters.md`, `tests/test_frozen_parameters.py`.
+- Evidence-informed engine defaults locked at commit `0cceb2a` (see `versions/0.5.1.md`).

@@ -19,17 +19,17 @@
       {
         "seed": 47,
         "routine_logistics_delays": 0,
-        "closure_logistics_delays": 1904
+        "closure_logistics_delays": 1914
       },
       {
         "seed": 48,
         "routine_logistics_delays": 0,
-        "closure_logistics_delays": 1900
+        "closure_logistics_delays": 1879
       },
       {
         "seed": 49,
         "routine_logistics_delays": 0,
-        "closure_logistics_delays": 1900
+        "closure_logistics_delays": 1891
       }
     ],
     "direction_holds": true,
@@ -47,21 +47,21 @@
       {
         "seed": 47,
         "routine_declined": 0,
-        "shocked_declined": 1583,
+        "shocked_declined": 1468,
         "routine_settlement_retries": 0,
         "shocked_settlement_retries": 0
       },
       {
         "seed": 48,
         "routine_declined": 0,
-        "shocked_declined": 1535,
+        "shocked_declined": 1443,
         "routine_settlement_retries": 0,
         "shocked_settlement_retries": 0
       },
       {
         "seed": 49,
         "routine_declined": 0,
-        "shocked_declined": 1573,
+        "shocked_declined": 1478,
         "routine_settlement_retries": 0,
         "shocked_settlement_retries": 0
       }
@@ -81,23 +81,23 @@
     "runs": [
       {
         "seed": 47,
-        "closures": 154,
+        "closures": 148,
         "ablation_closures": 0,
-        "spoiled": 42.9804,
+        "spoiled": 47.7274,
         "ablation_spoiled": 0.0
       },
       {
         "seed": 48,
-        "closures": 108,
+        "closures": 116,
         "ablation_closures": 0,
-        "spoiled": 42.9804,
+        "spoiled": 47.7274,
         "ablation_spoiled": 0.0
       },
       {
         "seed": 49,
-        "closures": 118,
+        "closures": 124,
         "ablation_closures": 0,
-        "spoiled": 42.9804,
+        "spoiled": 47.7274,
         "ablation_spoiled": 0.0
       }
     ],

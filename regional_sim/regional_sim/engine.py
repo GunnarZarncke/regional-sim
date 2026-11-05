@@ -29,7 +29,7 @@ class Config:
     disable_coupling: tuple[str, ...] = ()
     extra_shocks: tuple[Shock, ...] = ()
     invariant_every_day: bool = True
-    free_flow_minutes: float = 24.0  # calibratable local travel time; FHWA alpha/beta remain fixed
+    free_flow_minutes: float = 24.0  # Columbus ACS 2024 mean commute proxy (~24.1 min); FHWA alpha/beta fixed
     availability_extension: bool = True  # explicitly ablatable research extension
 
     def validate(self):
@@ -85,8 +85,8 @@ class World:
         self.zone = (self.ids % self.z).astype(np.int16)
         self.hh_size = r.choice([1, 2, 3, 4, 5], self.n, p=[.29, .34, .16, .14, .07]).astype(np.int8)
         self.income = np.clip(r.lognormal(math.log(82_938), .62, self.n), 11_000, 550_000)
-        self.employed = r.random(self.n) < .73
-        self.remote = self.employed & (r.random(self.n) < .17)
+        self.employed = r.random(self.n) < .601
+        self.remote = self.employed & (r.random(self.n) < .133)
         self.need = (.5 + .35 * self.hh_size).astype(np.float32)  # grocery bundles/day
         self.med_need = np.where(r.random(self.n) < .16, .10, 0.).astype(np.float32)
         self.trust = r.uniform(.25, .95, self.n).astype(np.float32)
@@ -299,12 +299,12 @@ class World:
         tx = self.next_tx
         a, b = int(self.bank[sender]), int(self.bank[receiver])
         self.pending[tx] = (sender, receiver, amount, a, b, label)
-        # Intrabank posting is immediate; POS card batches settle after an hour;
+        # Intrabank posting is immediate; POS card authorizations settle after one day;
         # other interbank transfers use the NEXT BUSINESS DAY 08:30 proxy.
         if a == b:
             self.call(self.t, "settle", tx)
         elif label in {"retail_sale", "medicine_sale", "wholesale", "utility_bill"}:
-            self.call(self.t + 1, "settle", tx)
+            self.call(self.t + 24, "settle", tx)
         else:
             day = math.floor(self.t / 24)
             next_day = day + 1
@@ -976,7 +976,7 @@ class World:
                 z = int(self.store_zone[store])
                 powered = self.store_rank[store] < self.power_ratio[z]
                 self.store_outage_hours[store] = 0. if powered else self.store_outage_hours[store] + 1
-                if self.store_outage_hours[store] > 6:
+                if self.store_outage_hours[store] > 4:
                     acc = self.n + store
                     loss = float(self.goods[acc, 0]) * .0006
                     self.goods[acc, 0] -= loss
@@ -1097,7 +1097,7 @@ class World:
             clinic_factor = float(self.critical_ratio[0])
         workforce = max(.5, min(1., self.attended[self.clinic] / max(1, int(self.n * .001))))
         clinic_factor *= workforce * min(1., self.factor_for("services", 0))
-        water_need = self.n * .35 / 24
+        water_need = self.n * .61 / 24  # ~64.6 gpcd indoor × ~2.5 persons, EPA planning benchmark
         water_capacity = (water_need * 1.25 *
                           (1. if "power_to_services" in self.disabled else float(np.mean(self.critical_ratio))) *
                           min(1., float(np.mean([self.factor_for("services", z) for z in range(self.z)]))))
@@ -1162,8 +1162,8 @@ class World:
         self.stats["unmet_medicine_milli"] += int(round(float((med - meds_used).sum()) * 1000))
         # Daily electricity bill and utility salaries/municipal service transfers are real debits.
         for i in range(self.n):
-            if self.balance[i] >= 310:  # approximately $3.10/day, US average is $4.52 in 2023
-                self.transfer(i, self.utility, 310, "utility_bill")
+            if self.balance[i] >= 460:  # ~$4.60/day order-of-magnitude residential electric bill proxy
+                self.transfer(i, self.utility, 460, "utility_bill")
         if self.balance[self.utility] >= self.n * 100:
             self.transfer(self.utility, self.gov, self.n * 100, "utility_contract")
         self.attended[:] = 0

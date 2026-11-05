@@ -31,8 +31,12 @@ The new Fix I-5 48% departure-adjustment / 44% route-change marginals are respon
 
 ## 0.5.0-dev coupling checks and finance refuse
 
-Scripted-human coupling **direction** holds for transport→freight, payments→electronic declines, and power→retail closures (ablation). Magnitudes are **gaps**; see `docs/coupling_checks.md` and `calibration/coupling_results.json`. Quantitative depositor-run rates and global markets are a **scope refuse** (`docs/finance_scope.md`), not a missing metadata patch. Fix I-5, Sue Wing, and AEP parameters were not retuned.
+Scripted-human coupling **direction** holds for transport→freight, payments→electronic declines, and power→retail closures (ablation). Magnitudes are **scope refuses**; see `docs/coupling_checks.md`, `docs/validation_scope.md`, and `calibration/coupling_results.json`. Quantitative depositor-run rates and global markets are a **scope refuse** (`docs/finance_scope.md`), not a missing metadata patch. Fix I-5, Sue Wing, and AEP parameters were not retuned.
 
 ## 0.5.1 parameter freeze
 
 World-model defaults and packaged inverse-fit configs are **locked** at [`docs/frozen_parameters.md`](frozen_parameters.md) / [`configs/frozen_world_parameters.json`](../configs/frozen_world_parameters.json). `tests/test_frozen_parameters.py` guards against silent drift. This is **not** the full world freeze bar in [`INSTRUCTIONS.md`](../../INSTRUCTIONS.md): independent magnitude validation and held-out benchmarks remain outstanding.
+
+## 0.5.1 provenance and validation scope
+
+Contextual sources from the 2026-11-04 C-parameter scan are recorded in `provenance.json` without upgrading C to A. Magnitude claims without a matching denominator are **scope refuses** ([`docs/validation_scope.md`](validation_scope.md)): Columbus truck delays, card/ACH incident rates, spoilage volume, Fix I-5 geographic transfer, independent AEP event response, executed Sue Wing relocations, joint shock catalogs. Do not retune Fix I-5, Sue Wing, or AEP multipliers to close those refuses.

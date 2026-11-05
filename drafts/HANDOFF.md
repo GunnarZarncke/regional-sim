@@ -2,13 +2,13 @@
 
 ## Open work
 
-- Independent validation of Fix I-5 → Columbus travel-information transfer.
-- Coupling **magnitudes** remain gaps; **world freeze bar** not met.
-- Provenance pass for remaining C parameters (`drafts/2026-11-04-c-parameter-evidence-scan.md`).
-- Optional: split 24 h card hold to retail/medicine only.
-- Do not start the AI experiment until world freeze bar is explicitly accepted (parameter freeze ≠ world freeze).
+- **Step 2:** Preregister validation battery (protocol commit, then run commit). Held-out seeds `9091–9094`. Include software checks; record magnitude rows as refuses from `docs/validation_scope.md`.
+- **Step 3:** Million-household run (`configs/large.json`) after the battery tree is frozen; define timeout/memory success first.
+- **Step 4:** Scoped world freeze declaration (`world_freeze_bar_met` for that claim boundary only).
+- **Step 5 (after freeze):** Exploratory 10k AI pilot; do not retune world from it.
+- Parameter freeze ≠ full independent Columbus validation.
 
 ## Recently shipped
 
-- **0.5.1 parameter freeze:** `configs/frozen_world_parameters.json`, `docs/frozen_parameters.md`, `tests/test_frozen_parameters.py`.
-- Evidence-informed engine defaults locked at commit `0cceb2a` (see `versions/0.5.1.md`).
+- **0.5.1 parameter freeze** (`1dd96f4`).
+- Provenance scan + magnitude **scope refuses** (`docs/validation_scope.md`).

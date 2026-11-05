@@ -1,6 +1,6 @@
 # Human-baseline coupling checks
 
-**Status:** mechanism direction under the scripted policy. **Magnitudes are gaps.** Ablations are labeled non-operational controls (`--disable-coupling`). Containment (delay without collapse) is a successful check.
+**Status:** mechanism direction under the scripted policy. **Magnitudes are scope refuses** (no matching Columbus denominators); see [`validation_scope.md`](validation_scope.md). Ablations are labeled non-operational controls (`--disable-coupling`). Containment (delay without collapse) is a successful check.
 
 Scripted humans only. Default `ScriptedPolicy`. Availability extension off in these runs so relocation does not mix with freight or shopping.
 
@@ -19,7 +19,7 @@ Results: `calibration/coupling_results.json` (n=800, 3 days, seeds 47–49, avai
 
 | Check | Expected direction | Magnitude |
 |-------|--------------------|-----------|
-| Closure vs routine, same seed | `logistics_delays` higher; restock stays in transit until a later retry | **Gap.** No Columbus truck-delay series matches this two-corridor proxy. |
+| Closure vs routine, same seed | `logistics_delays` higher; restock stays in transit until a later retry | **Scope refuse.** No Columbus truck-delay series matches this two-corridor proxy. |
 
 Unit test: `test_road_closure_defers_main_corridor_freight`.
 
@@ -29,8 +29,8 @@ Unit test: `test_road_closure_defers_main_corridor_freight`.
 
 | Check | Expected direction | Magnitude |
 |-------|--------------------|-----------|
-| Payments shock vs routine | `payment_network_declined` not lower | **Gap.** No matching card-network or ACH incident denominator. |
-| Comms down vs `--disable-coupling power_to_payments` | transfer fails only with the link on | **Gap.** Basel LCR weights are not used. |
+| Payments shock vs routine | `payment_network_declined` not lower | **Scope refuse.** No matching card-network or ACH incident denominator. |
+| Comms down vs `--disable-coupling power_to_payments` | transfer fails only with the link on | **Scope refuse.** Basel LCR weights are not used as a rate. |
 
 Household `insufficient_funds` is a budget outcome, not this coupling. Retailer endowments are large enough that firm cash does not bind.
 
@@ -40,7 +40,7 @@ Stores close when `power_to_retail` is on and the feeder is unpowered. Refrigera
 
 | Check | Expected direction | Magnitude |
 |-------|--------------------|-----------|
-| Power outage vs same outage with `power_to_retail` disabled | more `shop_power_closures`; spoiled grocery not lower | **Gap.** Do not fit spoilage. |
+| Power outage vs same outage with `power_to_retail` disabled | more `shop_power_closures`; spoiled grocery not lower | **Scope refuse.** Do not fit spoilage volume. |
 
 Existing unit test: `test_ablation_isolation_power_to_retail`. Short-run check: `test_power_to_retail_closures_exceed_ablation_on_short_run`.
 

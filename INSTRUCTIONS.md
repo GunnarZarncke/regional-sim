@@ -96,10 +96,12 @@ Record these checks in the world validation release. If a cross-domain effect
 appears only after AI policies are swapped in, the experiment would restate
 couplings that were never validated in the baseline world.
 
-**Current record (0.5.0-dev):** mechanism **direction** under `ScriptedPolicy`
+**Current record (0.5.0-dev / 0.5.1):** mechanism **direction** under `ScriptedPolicy`
 is checked for transport→freight, payments→declines, and power→retail
-(ablation). Magnitudes remain gaps. See
-[`regional_sim/docs/coupling_checks.md`](regional_sim/docs/coupling_checks.md)
+(ablation). Coupling **magnitudes** are **scope refuses** (no matching
+denominators). See
+[`regional_sim/docs/coupling_checks.md`](regional_sim/docs/coupling_checks.md),
+[`regional_sim/docs/validation_scope.md`](regional_sim/docs/validation_scope.md),
 and `regional_sim/calibration/coupling_results.json`.
 
 #### Parameter freeze (0.5.1)

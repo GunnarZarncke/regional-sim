@@ -1,7 +1,7 @@
 # Preregistered validation battery (software / scoped freeze)
 
 **Date:** 2026-11-06  
-**Status:** Protocol only. **Do not treat this file as results.** Runner: `python -m scripts.run_validation_battery`. Extract: `calibration/validation_battery.json` (written by a later commit).
+**Status:** Protocol plus extract. Runner: `python -m scripts.run_validation_battery`. Extract: `calibration/validation_battery.json`.
 
 **Plane:** oracle / experiment checks. No engine retune. Held-out seeds are **not** used to fit.
 
@@ -61,4 +61,15 @@ Write NDJSON under `output/` (gitignored). After extracting `trace.counts`, dele
 
 ## What this commit does not do
 
-Does not run the battery. Does not change engine parameters. Does not start the million-household step (`configs/large.json`, same 30-day clock, traces off—later).
+Does not change engine parameters. Does not start the million-household step (`configs/large.json`, same 30-day clock, traces off—later).
+
+## Results (quoted)
+
+`python -m scripts.run_validation_battery` (2026-11-06), **96.233 s**, traces discarded:
+
+- `"transport_freight_direction": true` — routine `logistics_delays` 0 vs closure 1897 / 1899 / 1899 / 1901.
+- `"payments_settlement_direction": true` — routine declines 0 vs 1486 / 1498 / 1469 / 1487.
+- `"power_retail_direction": true` — closures 114 / 117 / 115 / 107 vs ablation 0.
+- `"invariants": true`
+
+These counts are software responses, not Columbus benchmarks.

@@ -17,7 +17,10 @@ class ValidationBatterySpec(unittest.TestCase):
         self.assertEqual(SPEC["horizon_days"], 30)
         self.assertFalse(SPEC["trace"]["commit"])
         self.assertTrue(SPEC["trace"]["discard_after_extracting_counts"])
-        self.assertEqual(SPEC["status"], "preregistered; results not yet run")
+        self.assertTrue(SPEC["status"].startswith("run"))
+        results = json.loads((ROOT / "calibration/validation_battery.json").read_text())
+        self.assertEqual(results["seeds"], SPEC["held_out_seeds"])
+        self.assertTrue(all(results["pass"].values()))
 
     def test_cells(self):
         ids = [c["id"] for c in SPEC["cells"]]

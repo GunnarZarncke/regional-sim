@@ -115,7 +115,7 @@ heterogeneity, and held-out validation remain open).
 
 Preregistered **software** validation battery (30-day horizon, seeds
 9091–9094, magnitude rows refused): [`regional_sim/docs/validation_battery.md`](regional_sim/docs/validation_battery.md).
-Results are a later commit; do not run the battery in the protocol commit.
+Extract: `regional_sim/calibration/validation_battery.json` (direction and invariants true; 96.233 s). Magnitude rows remain refuses.
 
 #### 3. Release without requiring catastrophe
 

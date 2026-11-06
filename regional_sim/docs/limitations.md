@@ -43,4 +43,4 @@ Contextual sources from the 2026-11-04 C-parameter scan are recorded in `provena
 
 ## 0.5.1 validation battery (protocol)
 
-Preregistered 30-day software battery: [`docs/validation_battery.md`](validation_battery.md), [`configs/validation_battery.json`](../configs/validation_battery.json). Held-out seeds 9091–9094. Direction and conservation only; traces discarded. **Not run in the protocol commit.**
+Preregistered 30-day software battery: [`docs/validation_battery.md`](validation_battery.md). Held-out seeds 9091–9094. Direction and conservation **passed** (`calibration/validation_battery.json`, 96.233 s). Magnitudes remain scope refuses. Traces discarded.

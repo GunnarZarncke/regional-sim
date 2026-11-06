@@ -1,5 +1,5 @@
 {
   "purpose": "Held-out seeds for the preregistered validation battery; never used to fit synthetic assumptions.",
   "seeds": [9091, 9092, 9093, 9094],
-  "status": "reserved for docs/validation_battery.md; results not yet run"
+  "status": "used in calibration/validation_battery.json; do not reuse to fit"
 }

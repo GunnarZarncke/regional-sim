@@ -1,6 +1,6 @@
 {
   "protocol": "docs/validation_battery.md",
-  "status": "preregistered; results not yet run",
+  "status": "run; see calibration/validation_battery.json",
   "simulator_version": "0.5.1",
   "parameter_freeze": "configs/frozen_world_parameters.json",
   "held_out_seeds": [9091, 9092, 9093, 9094],

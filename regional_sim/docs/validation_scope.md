@@ -34,4 +34,4 @@ Household size mix (national 1–2 person shares), income σ, grocery **bundles*
 
 ## Next gate
 
-Preregister a validation **battery** (separate commit) that tests software conservation, coupling **direction**, freeze-record literals, and records the rows above as refuses—not as failed Columbus magnitude tests.
+Preregistered battery: [`validation_battery.md`](validation_battery.md) (30 days, seeds 9091–9094). Run and extract are a later commit. Magnitude rows above stay refuses, not battery fails.

@@ -113,6 +113,10 @@ Changing them requires a new version string and an updated freeze record.
 **This does not satisfy the world freeze bar above** (magnitudes,
 heterogeneity, and held-out validation remain open).
 
+Preregistered **software** validation battery (30-day horizon, seeds
+9091–9094, magnitude rows refused): [`regional_sim/docs/validation_battery.md`](regional_sim/docs/validation_battery.md).
+Results are a later commit; do not run the battery in the protocol commit.
+
 #### 3. Release without requiring catastrophe
 
 World acceptance means empirical fidelity (within stated uncertainty),

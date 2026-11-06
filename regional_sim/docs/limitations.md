@@ -40,3 +40,7 @@ World-model defaults and packaged inverse-fit configs are **locked** at [`docs/f
 ## 0.5.1 provenance and validation scope
 
 Contextual sources from the 2026-11-04 C-parameter scan are recorded in `provenance.json` without upgrading C to A. Magnitude claims without a matching denominator are **scope refuses** ([`docs/validation_scope.md`](validation_scope.md)): Columbus truck delays, card/ACH incident rates, spoilage volume, Fix I-5 geographic transfer, independent AEP event response, executed Sue Wing relocations, joint shock catalogs. Do not retune Fix I-5, Sue Wing, or AEP multipliers to close those refuses.
+
+## 0.5.1 validation battery (protocol)
+
+Preregistered 30-day software battery: [`docs/validation_battery.md`](validation_battery.md), [`configs/validation_battery.json`](../configs/validation_battery.json). Held-out seeds 9091–9094. Direction and conservation only; traces discarded. **Not run in the protocol commit.**

@@ -1,0 +1,48 @@
+{
+  "protocol": "docs/validation_battery.md",
+  "status": "preregistered; results not yet run",
+  "simulator_version": "0.5.1",
+  "parameter_freeze": "configs/frozen_world_parameters.json",
+  "held_out_seeds": [9091, 9092, 9093, 9094],
+  "horizon_days": 30,
+  "shock_at_hour": 2,
+  "coupling_book": {
+    "households": 800,
+    "zones": 12,
+    "retailers": 24,
+    "availability_extension": false,
+    "scenario": "routine",
+    "policy": "ScriptedPolicy"
+  },
+  "conservation_smoke": {
+    "households": 10000,
+    "zones": 12,
+    "retailers": 24,
+    "availability_extension": false,
+    "scenario": "routine"
+  },
+  "trace": {
+    "write_under": "output/validation_battery/",
+    "sample_rate": 0.0,
+    "full_trace": false,
+    "commit": false,
+    "discard_after_extracting_counts": true
+  },
+  "cells": [
+    {"id": "routine", "shocks": [], "disable_coupling": []},
+    {"id": "road_closure", "shocks": [{"domain": "road_closure", "multiplier": 0, "duration_hours": 36}], "disable_coupling": []},
+    {"id": "payments", "shocks": [{"domain": "payments", "multiplier": 0, "duration_hours": 24}], "disable_coupling": []},
+    {"id": "power", "shocks": [{"domain": "power", "multiplier": 0, "duration_hours": 24}], "disable_coupling": []},
+    {"id": "power_ablation", "shocks": [{"domain": "power", "multiplier": 0, "duration_hours": 24}], "disable_coupling": ["power_to_retail"]}
+  ],
+  "pass_rules": [
+    "invariants() holds on every run",
+    "goods_error_max is finite and conservation asserts pass",
+    "for each seed, road_closure logistics_delays > routine logistics_delays",
+    "for each seed, payments payment_network_declined >= routine payment_network_declined",
+    "for each seed, power shop_power_closures > power_ablation shop_power_closures",
+    "frozen_world_parameters.json literals still match engine (existing unit test)"
+  ],
+  "not_scored": "Magnitude and geographic-transfer claims listed in docs/validation_scope.md are scope refuses, not battery fails.",
+  "output": "calibration/validation_battery.json"
+}

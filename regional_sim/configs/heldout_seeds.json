@@ -1,5 +1,5 @@
 {
-  "purpose": "Reserved for future independent validation; never used to fit synthetic assumptions.",
+  "purpose": "Held-out seeds for the preregistered validation battery; never used to fit synthetic assumptions.",
   "seeds": [9091, 9092, 9093, 9094],
-  "status": "reserved, NOT yet externally validated"
+  "status": "reserved for docs/validation_battery.md; results not yet run"
 }

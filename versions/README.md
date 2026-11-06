@@ -20,5 +20,6 @@ Travel information: [`../regional_sim/docs/travel_information.md`](../regional_s
 Coupling checks: [`../regional_sim/docs/coupling_checks.md`](../regional_sim/docs/coupling_checks.md).  
 Finance scope refuse: [`../regional_sim/docs/finance_scope.md`](../regional_sim/docs/finance_scope.md).  
 Validation scope / magnitude refuses: [`../regional_sim/docs/validation_scope.md`](../regional_sim/docs/validation_scope.md).  
+Validation battery protocol: [`../regional_sim/docs/validation_battery.md`](../regional_sim/docs/validation_battery.md).  
 Participant policy & communication audit: [`../regional_sim/docs/participant_communication.md`](../regional_sim/docs/participant_communication.md).  
 Precursor capability review: [`../drafts/model-catastrophic-effects.md`](../drafts/model-catastrophic-effects.md).

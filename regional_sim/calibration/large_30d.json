@@ -1,0 +1,20 @@
+{
+  "status": "million-household 30-day scale check; traces off; not a magnitude calibration",
+  "n": 1000000,
+  "days": 30,
+  "zones": 120,
+  "retailers": 2400,
+  "seed": 9091,
+  "availability_extension": true,
+  "init_seconds": 1.665,
+  "elapsed_seconds": 2636.098,
+  "rss_mb_peak": 3008.9,
+  "invariants": true,
+  "goods_error_max": 9.706709533929825e-07,
+  "escrow_cents": 539685822,
+  "unmet_grocery_units": 5415184.968,
+  "people_temporarily_away": 0,
+  "logistics_delays": 2099,
+  "shop_power_closures": 0,
+  "payment_failures": 46
+}

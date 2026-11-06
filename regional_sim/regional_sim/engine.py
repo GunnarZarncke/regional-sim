@@ -699,7 +699,9 @@ class World:
         if not channel_available or self.rng.random() > float(self.attention[i]):
             self.stats["messages_not_received"] += 1
             return
-        m = self.messages[mid]
+        m = self.messages.get(mid)
+        if m is None:
+            return
         visible = layer != "online"
         credibility = 1. if layer == "official" else (.8 if layer == "news" else float(self.trust[i]))
         view = MessageView(mid, m["origin"], m["sender"], m["created"], m["claim"], m["evidence"],
@@ -1168,6 +1170,13 @@ class World:
             self.transfer(self.utility, self.gov, self.n * 100, "utility_contract")
         self.attended[:] = 0
         self.actions = {aid: item for aid, item in self.actions.items() if item[2] in {"requested", "accepted", "deferred", "executed"} and (item[1].kind in {"buy", "buy_medicine", "commute", "query", "schedule", "relocate", "return"} or item[2] == "requested")}
+        # Drop delivered traffic after the forward/receipt window. Unbounded
+        # message dicts (each with a recipient set) grow linearly in n × days.
+        cutoff = self.t - 48
+        self.messages = {mid: m for mid, m in self.messages.items() if m["created"] >= cutoff}
+        expired = [i for i, q in self.query_result.items() if q[1] < self.t]
+        for i in expired:
+            self.query_result.pop(i, None)
         if self.cfg.invariant_every_day:
             self.invariants()
         row = self.snapshot()

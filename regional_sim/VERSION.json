@@ -10,5 +10,6 @@
   "independent_empirical_validation_passed": false,
   "world_freeze_bar_met": false,
   "large_configuration_initializes": true,
-  "million_household_full_run_verified": false
+  "million_household_full_run_verified": true,
+  "million_household_30d_record": "calibration/large_30d.json"
 }

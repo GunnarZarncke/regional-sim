@@ -11,7 +11,7 @@ This is executable **prototype software**, not the validated scientific release 
 - Clinic visits have synthetic hazard, FIFO rules and medicine consumption; no detailed health statuses, clinical urgency, facility staffing rosters, ambulances or health outcomes. Water service uses scalar flow only. No deaths/serious outcomes are asserted.
 - Routine/seasonal/severe shock multipliers and durations are transparent **synthetic priors**; no severe-shock frequency, covariance or historical joint distribution has been estimated. A targeted `power_shock.json` is a software test input, not a constructed disaster scenario used to fit desirable response.
 - `traces.ndjson` is sampled by household by default. Aggregated and institutional records are always preserved; some private state transformations (e.g., biological consumption) appear as state totals rather than per-person messages. Daily metrics are cumulative unless named as an instantaneous state.
-- One-million-household initialization completed in ~3.88 s with ~418 MB peak RSS under the test environment. A **full one-day one-million-household run did not finish within 200 s**, and its final performance/memory needs are unverified. A 100k one-day run completed in ~6.04 s/~187 MB. The large configuration is a documented intended target, not certified throughput.
+- One-million-household **30-day** routine run (seed 9091, availability on, traces off) completed in **2636 s** with **3.01 GB** peak RSS; `invariants()` held (`calibration/large_30d.json`). That supersedes the older 200 s one-day timeout note. The book is an enlarged synthetic sample, not ACS household counts.
 - At least one independently sourced normal-operating and disturbance-response benchmark **per domain has not been passed**. Existing conservation, paired runs and negative controls test the implementation's internal consistency, not external validity. Unperformed or failed tests are not relabeled successes. Full preregistered freeze, independently held-out response trials and validation-based final release remain outstanding.
 
 ## 0.2.0-dev partial calibration supplement
@@ -44,3 +44,7 @@ Contextual sources from the 2026-11-04 C-parameter scan are recorded in `provena
 ## 0.5.1 validation battery (protocol)
 
 Preregistered 30-day software battery: [`docs/validation_battery.md`](validation_battery.md). Held-out seeds 9091–9094. Direction and conservation **passed** (`calibration/validation_battery.json`, 96.233 s). Magnitudes remain scope refuses. Traces discarded.
+
+## 0.5.1 million-household 30-day scale check
+
+`python -m scripts.run_large_30d` under `caffeinate` (2026-11-06): n=1e6, 120 zones, 2400 retailers, 30 days, seed 9091. Quoted: `"elapsed_seconds": 2636.098`, `"rss_mb_peak": 3008.9`, `"invariants": true`. Daily GC drops messages older than 48 h so RSS does not grow with n×days. Not a magnitude calibration.

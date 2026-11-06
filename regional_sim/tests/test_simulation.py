@@ -356,6 +356,16 @@ class PolicyOwnershipAndSocialCausalityTests(unittest.TestCase):
         self.assertEqual(next(x.amount for x in a if x.kind=='buy'),4.)
         w.trace.close()
 
+    def test_daily_drops_messages_older_than_two_days(self):
+        w = world(n=80, days=1)
+        w.t = 72.
+        w.messages[1] = dict(id=1, sender=0, origin=0, created=0., claim="old", evidence="firsthand", ttl=0, recipients=set())
+        w.messages[2] = dict(id=2, sender=0, origin=0, created=50., claim="recent", evidence="firsthand", ttl=0, recipients=set())
+        w.daily()
+        self.assertNotIn(1, w.messages)
+        self.assertIn(2, w.messages)
+        w.trace.close()
+
     def test_accepted_relocation_survives_daily_cleanup(self):
         w = world(n=100)
         i, aid = 0, 9000

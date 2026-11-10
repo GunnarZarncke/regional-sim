@@ -34,4 +34,4 @@ Household size mix (national 1–2 person shares), income σ, grocery **bundles*
 
 ## Next gate
 
-Preregistered battery: [`validation_battery.md`](validation_battery.md) (30 days, seeds 9091–9094). Run and extract are a later commit. Magnitude rows above stay refuses, not battery fails.
+Battery extract and 1M×30d scale check are recorded. **Scoped software freeze:** [`scoped_world_freeze.md`](scoped_world_freeze.md). Magnitude rows above stay refuses, not freeze fails. Full world freeze bar remains unmet.

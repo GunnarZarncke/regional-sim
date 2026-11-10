@@ -1,0 +1,1 @@
+Please review this project as it stands right now. Read the code and the spec. I want a normal code review, and I also want you to say if anything looks unusual in the code, the spec, or anywhere else in the tree. Notes only. Don’t edit files.

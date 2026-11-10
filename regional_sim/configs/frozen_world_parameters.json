@@ -1,9 +1,9 @@
 {
   "schema": "regional_sim_parameter_freeze_v1",
-  "version": "0.5.1",
-  "frozen_at": "2026-11-05",
-  "source_commit": "0cceb2a0bf08727caaad27b7df6d0ba53885b1ed",
-  "scope": "Locks world-model numeric defaults in engine.py and the packaged inverse-fit commute and AEP proxy configs at this commit. Does not waive independent validation or the world freeze bar in INSTRUCTIONS.md.",
+  "version": "0.6.0",
+  "frozen_at": "2026-11-10",
+  "source_commit": "9eed8e9cb978f845e2b71715a7dc53320f1c345b",
+  "scope": "Locks world-model numeric defaults in engine.py and the packaged inverse-fit commute and AEP proxy configs after 0.6.0 mobility changes. Does not waive independent validation or the world freeze bar in INSTRUCTIONS.md.",
   "engine": {
     "employment_probability": 0.601,
     "remote_work_probability_given_employment": 0.133,
@@ -18,11 +18,13 @@
     "refrigeration_spoilage_rate_per_hour": 0.0006,
     "water_need_m3_per_household_day": 0.61,
     "utility_obligation_cents_per_day": 460,
-    "config_default_free_flow_minutes": 24.0
+    "config_default_free_flow_minutes": 24.0,
+    "work_shift_hours": 8.0,
+    "min_sleep_after_home_hours": 7.0
   },
   "configs": {
     "calibrated_2024.json": {
-      "free_flow_minutes": 23.702395
+      "free_flow_minutes": 24.07125
     }
   },
   "calibration_artifact_paths": [

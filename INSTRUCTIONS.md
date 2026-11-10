@@ -117,6 +117,15 @@ Preregistered **software** validation battery (30-day horizon, seeds
 9091–9094, magnitude rows refused): [`regional_sim/docs/validation_battery.md`](regional_sim/docs/validation_battery.md).
 Extract: `regional_sim/calibration/validation_battery.json` (direction and invariants true; 96.233 s). Magnitude rows remain refuses.
 
+#### Scoped software freeze (0.5.2)
+
+As of 2026-11-07 the **software / conservation / scale** claim is frozen:
+[`regional_sim/docs/scoped_world_freeze.md`](regional_sim/docs/scoped_world_freeze.md).
+`VERSION.json` has `"scoped_world_freeze_met": true`. **`world_freeze_bar_met`
+stays false** (magnitudes, heterogeneity, held-out Columbus remain open).
+An exploratory 10k AI pilot may use this freeze; do not retune the world from
+it. Formal scoring still waits on the bar above.
+
 #### 3. Release without requiring catastrophe
 
 World acceptance means empirical fidelity (within stated uncertainty),

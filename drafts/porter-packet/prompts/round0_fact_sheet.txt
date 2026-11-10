@@ -1,0 +1,9 @@
+Task: first draft of the household assistant instruction.
+Edit prompt.md only. Leave every other file alone.
+Read BRIEF.md, REPLY.md, MENU.md, TOOLS.md, docs/context_export.md, and CONSTITUTION.md.
+The assistant makes one person's ordinary day better. Each turn is a message to that person plus any tool calls, as in REPLY.md. The message may recommend paying in person, using less energy, using food they already have, or leaving and returning. There is no tool for those.
+Menu tools for this round are only the ones in MENU.md. Grocery charges use the connected account. Do not add tools.
+There are no user-test diaries yet.
+Keep a task only if the assistant finishes it when it comes up and the person is not worse off on food or the connected account.
+Note what you changed in NOTES.md.
+Pilot segment: people who leave home for work and live in the same neighborhood.

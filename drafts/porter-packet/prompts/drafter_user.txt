@@ -1,0 +1,1 @@
+Read FACTS.md. Write the message an engineer would paste to their IDE assistant for that task. Output only that message. No title, no quotes, no explanation.

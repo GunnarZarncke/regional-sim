@@ -42,7 +42,8 @@ def fit_power(hour, target, seeds=FIT_SEEDS):
 
 def commute_run(freeflow, seed, n=10000, days=5):
     w=World(Config(households=n,days=days,seed=seed,trace='',free_flow_minutes=freeflow))
-    result=w.run(); return result['mean_travel_minutes']
+    result=w.run()
+    return result['mean_morning_commute_minutes']
 
 def mean_results(m,h,seeds):
     xs=[power_probe(m,h,s) for s in seeds]
@@ -72,7 +73,7 @@ def main():
     (ROOT/'configs'/'calibrated_2024.json').write_text(json.dumps(cfg,indent=2)+'\n')
     result={'status':'PARTIAL PROXY CALIBRATION, NOT independently validated',
             'benchmark_file':'benchmarks/observations.json',
-            'methods':{'commute':'paired-seed scaling of BPR t0; completed simulated trips vs ACS commuters is imperfect',
+            'methods':{'commute':'paired-seed scaling of BPR t0 to mean morning one-way commute_arrival minutes vs ACS commuters',
                        'outage':'inverse-fit exogenous regional power multiplier to observed customer counts divided by 2024 all-CBSA household estimate; one proxy observation per factor',
                        'historical_time':'hour 20 is Tuesday 20:00, hour 38 Wednesday 14:00; Thursday restoration timing imposed externally; world time origin is synthetic not the real 2022 calendar',
                        'scope_caveat':'AEP outage includes nonresidential customers, storm-initiated damage, and a boundary different from CBSA 18140; expansion is NOT measured and cannot be considered a fitted service territory',

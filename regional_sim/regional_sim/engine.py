@@ -15,6 +15,13 @@ from .network import Multiplex
 from .scenarios import Shock, generate
 from .availability import SMB_SHUTDOWN_1D, relocation_trigger_hours
 
+PLACE_HOME = 0
+PLACE_TO_WORK = 1
+PLACE_AT_WORK = 2
+PLACE_TO_HOME = 3
+WORK_SHIFT_HOURS = 8.0  # C-level hours at workplace before return trip is requested
+MIN_SLEEP_AFTER_HOME_HOURS = 7.0  # C-level; morning commute refused until elapsed
+
 @dataclass
 class Config:
     households: int = 10_000
@@ -213,8 +220,11 @@ class World:
         self.store_cumulative_closed_hours = np.zeros(self.r, dtype=np.int32)
         self.store_rank = r.random(self.r)
         self.store_outage_hours = np.zeros(self.r, dtype=float)
+        self.place = np.zeros(self.n, dtype=np.int8)
         self.last_commute_day = np.full(self.n, -1, dtype=np.int32)
+        self.last_home_arrival = np.full(self.n, -1e10)
         self.commute_action_id = np.full(self.n, -1, dtype=np.int64)
+        self.commute_home_action_id = np.full(self.n, -1, dtype=np.int64)
         self.commute_first_choice_day = np.full(self.n, -1, dtype=np.int32)
         self.commute_informed_seen = np.zeros(self.n, dtype=bool)
         self.cumulative_observed = 0
@@ -266,7 +276,9 @@ class World:
         assert np.all(self.goods >= -1e-7) and np.all(self.in_transit >= -1e-7)
         expected = self.goods_initial + self.produced
         assert np.allclose(self.goods_total(), expected, rtol=1e-11, atol=1e-4), (self.goods_total(), expected)
-        assert self.energy_served_kwh + self.energy_spilled_kwh <= self.generation_kwh + 1e-6
+        used = self.energy_served_kwh + self.energy_spilled_kwh
+        slack = max(1e-6, 1e-10 * abs(self.generation_kwh))
+        assert used <= self.generation_kwh + slack, (used, self.generation_kwh)
 
     def bank_access(self, a: int):
         if a < self.n and not self.household_local[a]:
@@ -380,6 +392,9 @@ class World:
             self.road_used[key(h)] += units
         self.stats["vehicle_trips"] += units
         self.stats["travel_minutes_total"] += int(round(units * travel * 60))
+        if purpose == "commute_arrival":
+            self.stats["morning_commute_minutes_milli"] += int(round(units * travel * 60 * 1000))
+            self.stats["morning_commute_trips"] += units
         self.stats["alternate_route_trips" if route == "alternate" else "main_route_trips"] += units
         self.call(self.t + travel, purpose, payload)
         self.trace.log(self.t, "mobility", -1, result="departed", zone=zone,
@@ -394,6 +409,18 @@ class World:
 
     def comm_access(self, i):
         return bool(self.internet[i] and (not self.household_local[i] or self.comm_up[int(self.zone[i])]))
+
+    def at_home(self, i: int) -> bool:
+        return bool(self.household_local[i] and int(self.place[i]) == PLACE_HOME)
+
+    def at_work(self, i: int) -> bool:
+        return bool(self.household_local[i] and int(self.place[i]) == PLACE_AT_WORK)
+
+    def sleep_allows_morning_commute(self, i: int) -> bool:
+        last = float(self.last_home_arrival[i])
+        if last <= -1e8:
+            return True
+        return self.t >= last + MIN_SLEEP_AFTER_HOME_HOURS
 
     def shift_for(self, i: int, day: int) -> bool:
         if self.last_commute_day[i] == day or not self.household_local[i] or not self.employed[i] or self.remote[i]:
@@ -415,12 +442,19 @@ class World:
         commute_aid = int(self.commute_action_id[i])
         if commute_aid in self.actions:
             active_ids.add(commute_aid)
+        commute_home_aid = int(self.commute_home_action_id[i])
+        if commute_home_aid in self.actions:
+            active_ids.add(commute_home_aid)
         active = tuple(sorted(active_ids))
         relocation_action = self.actions.get(int(self.relocation_action_id[i]))
         return_action = self.actions.get(int(self.return_action_id[i]))
         return Observation(
             participant=i, time=self.t, zone=zone, weekday=int(self.t / 24) % 7,
             locally_present=bool(self.household_local[i]),
+            at_home=self.at_home(i),
+            at_work=self.at_work(i),
+            hours_since_home_arrival=((self.t - self.last_home_arrival[i])
+                                      if self.last_home_arrival[i] > -1e8 else None),
             household_size=int(self.hh_size[i]), employed=bool(self.employed[i]), remote_worker=bool(self.remote[i]),
             scheduled_shift=self.shift_for(i, int(self.t // 24)),
             balance_cents=int(self.balance[i]), cash_cents=int(self.cash[i]),
@@ -460,6 +494,10 @@ class World:
             pending_commute=any(self.actions[aid][1].kind == "commute" for aid in active if aid in self.actions),
             pending_commute_request_id=(commute_aid if commute_aid in self.actions else None),
             pending_commute_route=(self.actions[commute_aid][1].payload if commute_aid in self.actions else ""),
+            pending_commute_home=any(self.actions[aid][1].kind == "commute_home" for aid in active if aid in self.actions),
+            pending_commute_home_request_id=(commute_home_aid if commute_home_aid in self.actions else None),
+            pending_commute_home_route=(self.actions[commute_home_aid][1].payload
+                                        if commute_home_aid in self.actions else ""),
             peer_relocation_route=(str(self.peer_relocation_route[i]) if self.peer_relocation_until[i] >= self.t else ""))
 
     def decide(self, i: int):
@@ -488,6 +526,8 @@ class World:
                 self.last_relocation_route[i] = "alternate" if action.target == 1 else "main"
             if action.kind == "commute":
                 self.commute_action_id[i] = aid
+            if action.kind == "commute_home":
+                self.commute_home_action_id[i] = aid
             if action.kind == "commute" and self.commute_first_choice_day[i] != int(self.t // 24):
                 self.commute_first_choice_day[i] = int(self.t // 24)
                 self.stats["commute_first_choices"] += 1
@@ -530,7 +570,7 @@ class World:
             if valid:
                 zone = int(self.zone[i])
                 good = 0 if a.kind == "buy" else 1
-                if not self.household_local[i]:
+                if not self.at_home(i):
                     valid = False
                 else:
                     departed = self.road_trip(zone, 1, "shop_arrival", (aid, i, float(a.amount), good))
@@ -539,11 +579,13 @@ class World:
                     self.call(self.t + 1, "action_retry", aid)
         elif a.kind == "commute":
             day = int(self.t // 24)
-            valid = bool(self.shift_for(i, day) and self.last_commute_day[i] != day)
+            valid = bool(self.shift_for(i, day) and self.last_commute_day[i] != day
+                         and self.at_home(i) and self.sleep_allows_morning_commute(i))
             if valid:
                 route = a.payload if a.payload in {"main", "alternate"} else "main"
                 departed = self.road_trip(int(self.zone[i]), 1, "commute_arrival", (aid, i, day), route=route)
                 if departed:
+                    self.place[i] = PLACE_TO_WORK
                     self.last_commute_day[i] = day
                 else:
                     self.last_road_delay[i] = self.t  # personal failed departure, not inferred closure
@@ -552,6 +594,19 @@ class World:
                     self.call(self.t + .1, "information_review", i)
                     deferred = True
                     self.call(self.t + 1, "commute_retry", (aid, i, day))
+        elif a.kind == "commute_home":
+            valid = int(self.place[i]) == PLACE_AT_WORK and self.commute_home_action_id[i] == aid
+            if valid:
+                route = a.payload if a.payload in {"main", "alternate"} else "main"
+                departed = self.road_trip(int(self.zone[i]), 1, "commute_home_arrival", (aid, i), route=route)
+                if departed:
+                    self.place[i] = PLACE_TO_HOME
+                else:
+                    self.last_road_delay[i] = self.t
+                    self.road_alert_until[i] = max(self.road_alert_until[i], self.t + 4)
+                    self.road_alert_source[i] = "firsthand"
+                    deferred = True
+                    self.call(self.t + 1, "commute_home_retry", (aid, i))
         elif a.kind == "query":
             valid = a.payload == "store_stock" and self.comm_access(i)
             if valid:
@@ -618,7 +673,7 @@ class World:
             if valid:
                 self.call(self.t, "availability_review", i)
         elif a.kind == "clinic":
-            valid = bool(self.household_local[i]) and i not in self.clinic_waiting and self.t - self.last_clinic_visit[i] > 14 * 24
+            valid = bool(self.at_home(i)) and i not in self.clinic_waiting and self.t - self.last_clinic_visit[i] > 14 * 24
             if valid:
                 self.clinic_queue.append((i, self.t))
                 self.clinic_waiting.add(i)
@@ -630,11 +685,13 @@ class World:
             old = self.actions.get(a.reference)
             valid = bool(old and old[0] == i and
                          (old[2] == "requested" or
-                          (old[2] in {"accepted", "deferred"} and old[1].kind in {"relocate", "return", "commute"})))
+                          (old[2] in {"accepted", "deferred"} and old[1].kind in {"relocate", "return", "commute", "commute_home"})))
             if valid:
                 if old[1].kind == "relocate": self.relocation_pending[i] = False
                 if old[1].kind == "return": self.return_pending[i] = False
                 if old[1].kind == "commute" and self.commute_action_id[i] == a.reference: self.commute_action_id[i] = -1
+                if old[1].kind == "commute_home" and self.commute_home_action_id[i] == a.reference:
+                    self.commute_home_action_id[i] = -1
                 if old[1].kind == "review": self.availability_review_pending[i] = False
                 self.actions[a.reference] = (old[0], old[1], "cancelled")
                 pending = self.actor_pending.get(i)
@@ -657,8 +714,10 @@ class World:
         if not valid:
             if a.kind == "commute" and self.commute_action_id[i] == aid:
                 self.commute_action_id[i] = -1
+            if a.kind == "commute_home" and self.commute_home_action_id[i] == aid:
+                self.commute_home_action_id[i] = -1
             self.stats["actions_rejected"] += 1
-        elif not deferred and a.kind not in {"buy", "buy_medicine", "commute", "query", "relocate", "return"}:
+        elif not deferred and a.kind not in {"buy", "buy_medicine", "commute", "commute_home", "query", "relocate", "return"}:
             self.complete(aid)
 
     def send(self, sender: int, claim: str, evidence: str, origin: int, ttl: int, channel: str):
@@ -771,13 +830,15 @@ class World:
             i, a, _ = old
             if a.kind == "commute" and self.commute_action_id[i] == aid:
                 self.commute_action_id[i] = -1
+            if a.kind == "commute_home" and self.commute_home_action_id[i] == aid:
+                self.commute_home_action_id[i] = -1
             self.trace.log(self.t, "action", i, id=aid, kind=a.kind, stage="completed")
 
     def shop_arrival(self, payload):
         aid, i, demand, good = payload
         store = int(self.store_of[i]); account = self.n + store; zone = int(self.store_zone[store])
-        if not self.household_local[i]:
-            self.trace.log(self.t, "action", i, id=aid, stage="failed", reason="outside_region")
+        if not self.at_home(i):
+            self.trace.log(self.t, "action", i, id=aid, stage="failed", reason="not_at_home")
             self.complete(aid)
             return
         if not 8 <= self.t % 24 < 22:
@@ -813,8 +874,10 @@ class World:
             self.complete(aid)
             return
         bill = int(round(q * (self.store_price[store] if good == 0 else self.medicine_price_cents)))
+        purchase = self.actions.get(aid)
+        electronic_only = bool(purchase and purchase[1].payload == "electronic_only")
         tx = self.transfer(i, account, bill, "retail_sale" if good == 0 else "medicine_sale")
-        if tx is None and self.cash[i] >= bill:
+        if tx is None and not electronic_only and self.cash[i] >= bill:
             tx = self.transfer(i, account, bill, "retail_sale" if good == 0 else "medicine_sale", method="cash")
         if tx is None:
             self.stats["payment_failed"] += 1
@@ -836,9 +899,21 @@ class World:
             return
         employer = int(self.job[i])
         account = self.n + employer if employer < self.r else [self.wh, self.supplier, self.utility, self.clinic][employer - self.r]
+        self.place[i] = PLACE_AT_WORK
         self.attended[account] += 1
         self.stats["completed_commutes"] += 1
         self.complete(aid)
+
+    def commute_home_arrival(self, payload):
+        aid, i = payload
+        if not self.household_local[i]:
+            self.complete(aid)
+            return
+        self.place[i] = PLACE_HOME
+        self.last_home_arrival[i] = self.t
+        self.stats["completed_commute_home"] += 1
+        self.complete(aid)
+        self.call(self.t + .01, "decide", i)
 
     def production(self):
         # External raw material / production boundary explicitly accounted for as created goods.
@@ -954,7 +1029,7 @@ class World:
         self.critical_ratio = np.divide(critical_served, critical, out=np.zeros_like(critical), where=critical > 0)
         self.power_ratio = np.divide(available_noncritical, homes + commercial,
                                      out=np.zeros_like(available_noncritical), where=(homes + commercial) > 0)
-        served = float(critical_served.sum() + available_noncritical.sum())
+        served = min(float(critical_served.sum() + available_noncritical.sum()), supply)
         self.home_demand_kwh += float(homes.sum())
         self.home_served_kwh += float((available_noncritical * homes / (homes + commercial)).sum())
         # Fixed household power ranks provide a transparent account-level outage proxy.
@@ -967,7 +1042,7 @@ class World:
         self.power_hourly.append((round(float(self.t), 5), unserved_households, round(float(self.power_ratio.mean()), 6)))
         self.generation_kwh += supply
         self.energy_served_kwh += served
-        self.energy_spilled_kwh += max(0, supply - served)
+        self.energy_spilled_kwh = max(0., self.generation_kwh - self.energy_served_kwh)
         self.energy_unserved_kwh += max(0., float(demand.sum() - served))
         if self.cfg.availability_extension:
             self.availability_power_tick()
@@ -1085,6 +1160,7 @@ class World:
     def return_arrival(self, i):
         if not self.household_local[i] and self.return_pending[i]:
             self.household_local[i] = True
+            self.place[i] = PLACE_HOME
             self.return_pending[i] = False
             self.hh_outage_hours[i] = 0
             self.stats["relocation_returned"] += 1
@@ -1169,7 +1245,7 @@ class World:
         if self.balance[self.utility] >= self.n * 100:
             self.transfer(self.utility, self.gov, self.n * 100, "utility_contract")
         self.attended[:] = 0
-        self.actions = {aid: item for aid, item in self.actions.items() if item[2] in {"requested", "accepted", "deferred", "executed"} and (item[1].kind in {"buy", "buy_medicine", "commute", "query", "schedule", "relocate", "return"} or item[2] == "requested")}
+        self.actions = {aid: item for aid, item in self.actions.items() if item[2] in {"requested", "accepted", "deferred", "executed"} and (item[1].kind in {"buy", "buy_medicine", "commute", "commute_home", "query", "schedule", "relocate", "return"} or item[2] == "requested")}
         # Drop delivered traffic after the forward/receipt window. Unbounded
         # message dicts (each with a recipient set) grow linearly in n × days.
         cutoff = self.t - 48
@@ -1215,6 +1291,9 @@ class World:
                     residential_kwh_per_household_day=round(self.home_demand_kwh / self.n / max(1e-6, self.t/24), 3),
                     residential_served_kwh_per_household_day=round(self.home_served_kwh / self.n / max(1e-6, self.t/24), 3),
                     mean_travel_minutes=round(self.stats["travel_minutes_total"] / max(1, self.stats["vehicle_trips"]), 3),
+                    mean_morning_commute_minutes=round(
+                        self.stats["morning_commute_minutes_milli"] / max(1, self.stats["morning_commute_trips"]) / 1000, 3),
+                    completed_commute_home=int(self.stats["completed_commute_home"]),
                     interrupted_feeder_hours=int(self.stats["interrupted_feeder_hours"]),
                     power_unserved_households_peak=int(self.power_unserved_households_peak),
                     power_unserved_households_last=int(self.power_unserved_households_last),
@@ -1273,23 +1352,39 @@ class World:
                 elif kind == "action_retry":
                     if payload in self.actions:
                         i, a, stage = self.actions[payload]
-                        if stage == "deferred" and a.kind in {"buy", "buy_medicine"} and self.household_local[i]:
+                        if stage == "deferred" and a.kind in {"buy", "buy_medicine"} and self.at_home(i):
                             if not self.road_trip(int(self.zone[i]), 1, "shop_arrival", (payload, i, float(a.amount), 0 if a.kind == "buy" else 1)):
                                 self.call(self.t + 1, "action_retry", payload)
                             else:
                                 self.actions[payload] = (i, a, "executed")
                 elif kind == "commute_retry":
                     aid, i, day = payload
-                    if aid in self.actions and self.actions[aid][2] == "deferred" and int(self.t // 24) == day and self.household_local[i]:
-                        if self.road_trip(int(self.zone[i]), 1, "commute_arrival", (aid, i, day),
-                                          route=(self.actions[aid][1].payload if self.actions[aid][1].payload in {"main", "alternate"} else "main")):
+                    if (aid in self.actions and self.actions[aid][2] == "deferred" and int(self.t // 24) == day
+                            and self.household_local[i] and self.at_home(i) and self.sleep_allows_morning_commute(i)):
+                        route = (self.actions[aid][1].payload if self.actions[aid][1].payload in {"main", "alternate"}
+                                 else "main")
+                        if self.road_trip(int(self.zone[i]), 1, "commute_arrival", (aid, i, day), route=route):
+                            self.place[i] = PLACE_TO_WORK
                             self.actions[aid] = (i, self.actions[aid][1], "executed")
                             self.last_commute_day[i] = day
                         else:
                             self.last_road_delay[i] = self.t
                             self.call(self.t + 1, "commute_retry", payload)
+                elif kind == "commute_home_retry":
+                    aid, i = payload
+                    if (aid in self.actions and self.actions[aid][2] == "deferred"
+                            and int(self.place[i]) in {PLACE_AT_WORK, PLACE_TO_HOME} and self.household_local[i]):
+                        route = (self.actions[aid][1].payload if self.actions[aid][1].payload in {"main", "alternate"}
+                                 else "main")
+                        if self.road_trip(int(self.zone[i]), 1, "commute_home_arrival", (aid, i), route=route):
+                            self.place[i] = PLACE_TO_HOME
+                            self.actions[aid] = (i, self.actions[aid][1], "executed")
+                        else:
+                            self.last_road_delay[i] = self.t
+                            self.call(self.t + 1, "commute_home_retry", payload)
                 elif kind == "shop_arrival": self.shop_arrival(payload)
                 elif kind == "commute_arrival": self.commute_arrival(payload)
+                elif kind == "commute_home_arrival": self.commute_home_arrival(payload)
                 elif kind == "relocation_depart": self.relocation_depart(payload)
                 elif kind == "relocation_arrival": self.relocation_arrival(payload)
                 elif kind == "return_depart": self.return_depart(payload)

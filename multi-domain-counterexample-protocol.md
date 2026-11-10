@@ -30,6 +30,10 @@ At minimum, document in the validation release:
 The adoption experiment compares AI replacement to **that** validated baseline.
 It must not be the first test of magnitude claims or ordinary couplings.
 
+A **scoped software freeze** ([`regional_sim/docs/scoped_world_freeze.md`](regional_sim/docs/scoped_world_freeze.md))
+may host an **exploratory** small AI pilot. Do not treat that pilot as the
+scored experiment in this protocol, and do not retune the world from it.
+
 ## 2. Preregistration
 
 Before inspecting the experimental outcomes, register:

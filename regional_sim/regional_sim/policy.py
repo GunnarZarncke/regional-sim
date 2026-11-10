@@ -24,6 +24,9 @@ class Observation:
     weekday: int
     household_size: int
     locally_present: bool
+    at_home: bool
+    at_work: bool
+    hours_since_home_arrival: float | None
     employed: bool
     remote_worker: bool
     scheduled_shift: bool
@@ -71,7 +74,12 @@ class Observation:
     pending_commute: bool = False
     pending_commute_request_id: int | None = None
     pending_commute_route: str = ""
+    pending_commute_home: bool = False
+    pending_commute_home_request_id: int | None = None
+    pending_commute_home_route: str = ""
     peer_relocation_route: str = ""
+
+WORK_SHIFT_HOURS = 8.0  # C-level; must match engine.WORK_SHIFT_HOURS
 
 @dataclass(frozen=True)
 class Action:
@@ -135,14 +143,18 @@ class ScriptedPolicy:
                 actions.append(Action("return", target=(1 if o.road_alert and o.commute_route_preference else -1)))  # Six hours is a C-level heuristic.
         reinforced = o.current_claim_exposures.get("retail_stockout", 0) >= o.adoption_threshold
         desired = o.grocery_need_daily * (4.0 if reinforced else 2.5)
-        opening_delay = (rng.uniform(.1, .65) if 8 <= o.time % 24 <= 20.5
-                         else (8 - o.time % 24) % 24 + rng.uniform(.05, .45))
-        if o.locally_present and not o.pending_grocery_purchase and o.groceries < desired and o.balance_cents + o.cash_cents >= o.local_price_cents:
+        if o.at_home and o.employed and not o.remote_worker:
+            opening_delay = (rng.uniform(.1, .65) if 17 <= o.time % 24 <= 21
+                             else ((17 - o.time % 24) % 24) + rng.uniform(.05, .45))
+        else:
+            opening_delay = (rng.uniform(.1, .65) if 8 <= o.time % 24 <= 20.5
+                             else (8 - o.time % 24) % 24 + rng.uniform(.05, .45))
+        if o.at_home and not o.pending_grocery_purchase and o.groceries < desired and o.balance_cents + o.cash_cents >= o.local_price_cents:
             affordable = (o.balance_cents + o.cash_cents) // max(1, o.local_price_cents)
             amount = min(max(0, desired - o.groceries), 6.0, affordable)
             if amount >= .25:
                 actions.append(Action("buy", amount=round(amount, 2), delay_hours=opening_delay))
-        if o.locally_present and not o.pending_medicine_purchase and o.medical_need_daily and o.medicines < o.medical_need_daily * 3 and o.balance_cents + o.cash_cents >= o.medicine_price_cents:
+        if o.at_home and not o.pending_medicine_purchase and o.medical_need_daily and o.medicines < o.medical_need_daily * 3 and o.balance_cents + o.cash_cents >= o.medicine_price_cents:
             med_quantity = min(max(0., o.medical_need_daily * 7 - o.medicines), .8,
                                (o.balance_cents + o.cash_cents) / o.medicine_price_cents)
             if med_quantity >= .05:
@@ -152,7 +164,11 @@ class ScriptedPolicy:
                 o.pending_commute_request_id is not None):
             actions.append(Action("cancel", reference=o.pending_commute_request_id))
             actions.append(Action("commute", payload="alternate", delay_hours=rng.uniform(.05, .35)))
-        if o.scheduled_shift and not o.pending_commute and 5.5 <= o.time % 24 <= 10.5:
+        if (o.at_work and o.employed and not o.remote_worker and not o.pending_commute_home):
+            route = "alternate" if o.road_alert and o.commute_route_preference else "main"
+            actions.append(Action("commute_home", payload=route, delay_hours=WORK_SHIFT_HOURS + rng.uniform(.05, .35)))
+        if (o.scheduled_shift and o.at_home and not o.pending_commute and 5.5 <= o.time % 24 <= 10.5
+                and (o.hours_since_home_arrival is None or o.hours_since_home_arrival >= 7.)):
             informed = o.road_alert
             route = "alternate" if informed and o.commute_route_preference else "main"
             # Observed Fix I-5 closure responses: 44% route adaptation and
@@ -178,7 +194,7 @@ class ScriptedPolicy:
         if o.comm_access and rng.random() < .008:
             actions.append(Action("ask", payload="retail_stockout"))
         visit_hazard = .002 + (.005 if o.medical_need_daily else 0.)
-        if o.locally_present and not o.clinic_pending and (o.last_clinic_visit_hours_ago is None or o.last_clinic_visit_hours_ago > 14 * 24) and rng.random() < visit_hazard:
+        if o.at_home and not o.clinic_pending and (o.last_clinic_visit_hours_ago is None or o.last_clinic_visit_hours_ago > 14 * 24) and rng.random() < visit_hazard:
             actions.append(Action("clinic"))
         if not actions:
             actions.append(Action("none"))

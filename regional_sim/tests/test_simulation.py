@@ -168,7 +168,7 @@ class ModelTests(unittest.TestCase):
         from regional_sim.policy import ScriptedPolicy
         import random
         w = world()
-        o = replace(w.obs(0), time=23., groceries=0., pending_grocery_purchase=False)
+        o = replace(w.obs(0), time=23., groceries=0., pending_grocery_purchase=False, remote_worker=True)
         acts = ScriptedPolicy().decide(o, random.Random(1))
         buy = next(x for x in acts if x.kind == 'buy')
         self.assertGreater(buy.delay_hours, 8.)
@@ -356,6 +356,14 @@ class PolicyOwnershipAndSocialCausalityTests(unittest.TestCase):
         self.assertEqual(next(x.amount for x in a if x.kind=='buy'),4.)
         w.trace.close()
 
+    def test_hourly_energy_served_plus_spill_does_not_exceed_generation(self):
+        w = world(n=8000, days=1, zones=40)
+        for _ in range(720):
+            w.power()
+            w.t += 1.
+            w.invariants()
+        w.trace.close()
+
     def test_daily_drops_messages_older_than_two_days(self):
         w = world(n=80, days=1)
         w.t = 72.
@@ -377,4 +385,51 @@ class PolicyOwnershipAndSocialCausalityTests(unittest.TestCase):
         w.daily()
         self.assertEqual(w.actions[aid][2], 'accepted')
         self.assertTrue(w.relocation_pending[i])
+        w.trace.close()
+
+    def test_commute_home_arrival_sets_home(self):
+        from regional_sim.engine import PLACE_AT_WORK, PLACE_HOME
+        w = world(n=8, days=1)
+        i = 0
+        w.place[i] = PLACE_AT_WORK
+        aid = 7001
+        w.actions[aid] = (i, Action('commute_home', payload='main'), 'accepted')
+        w.commute_home_action_id[i] = aid
+        w.commute_home_arrival((aid, i))
+        self.assertEqual(int(w.place[i]), PLACE_HOME)
+        self.assertAlmostEqual(w.last_home_arrival[i], w.t)
+        w.trace.close()
+
+    def test_sleep_gate_blocks_morning_commute(self):
+        from regional_sim.engine import PLACE_HOME
+        w = world(n=32, days=1)
+        i = 0
+        w.place[i] = PLACE_HOME
+        w.last_home_arrival[i] = 6.
+        w.t = 8.
+        w.employed[i] = True
+        w.remote[i] = False
+        aid = 8001
+        w.actions[aid] = (i, Action('commute', payload='main'), 'requested')
+        w.commute_action_id[i] = aid
+        w.action(aid)
+        self.assertEqual(w.actions[aid][2], 'rejected')
+        w.trace.close()
+
+    def test_electronic_only_purchase_no_cash_fallback(self):
+        from regional_sim.engine import PLACE_HOME
+        w = world(n=32, days=1)
+        i = 0
+        w.t = 10.
+        w.place[i] = PLACE_HOME
+        w.cash[i] = 50000
+        w.balance[i] = 0
+        store = int(w.store_of[i])
+        w.goods[w.n + store, 0] = 20.
+        w.attended[w.n + store] = 999
+        aid = 9001
+        w.actions[aid] = (i, Action('buy', amount=2., payload='electronic_only'), 'accepted')
+        w.shop_arrival((aid, i, 2., 0))
+        self.assertEqual(w.stats['payment_failed'], 1)
+        self.assertEqual(w.cash[i], 50000)
         w.trace.close()

@@ -24,7 +24,7 @@ simulator plus one protocol.
 | [`INSTRUCTIONS.md`](INSTRUCTIONS.md) | Mission, **world-freeze bar** (magnitudes, human-baseline coupling, no required catastrophe), experiment discipline |
 | [`AGENTS.md`](AGENTS.md) | Agent working rules |
 
-[`regional_sim/`](regional_sim/) — RegionalSim **0.5.1** (world **parameters frozen**; coupling direction checks; finance/markets scope refuse). Not independently validated; full world freeze bar not claimed. Version history: [`versions/`](versions/).
+[`regional_sim/`](regional_sim/) — RegionalSim **0.5.2** (**scoped software freeze**: conservation, coupling direction, 1M×30d scale; 0.5.1 parameters locked). Not independently validated; full world freeze bar not claimed. Version history: [`versions/`](versions/).
 
 ## Working with agents
 

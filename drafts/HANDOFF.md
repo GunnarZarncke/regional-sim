@@ -2,7 +2,7 @@
 
 ## Open work
 
-- **Porter packet:** Adapter maps engine `Observation` to export v1 and uses `electronic_only` on buy. Round 0 when asked. Plan: [`ai-agent-prototype-plan.md`](ai-agent-prototype-plan.md).
+- **Porter:** Phase 1 is prompt design only. Phase 2 is the full ordinary action interface plus protocol §5 evaluation. Phase 3 is the scored adoption sweep after the world freeze bar and preregistration. Plan: [`ai-agent-prototype-plan.md`](ai-agent-prototype-plan.md). Next concrete step is still the export adapter and round 0 when asked.
 - **Later:** exploratory 10k pilot on held-out seeds 9091–9094, only from a prompt that loop has frozen.
 - Full **world freeze bar** (magnitudes, heterogeneity, held-out Columbus) remains unmet. Scored protocol waits on it.
 

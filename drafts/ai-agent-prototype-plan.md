@@ -315,10 +315,13 @@ Runs only after Step 1 is accepted.
    `drafts/YYYY-MM-DD-porter-round-N.md`. Store the fact sheet, the IDE user
    message, and the review there too.
 
-The 100-in-10k run is one extra pass of steps 5–6 after round 7 (or after an
-early stop). It uses the frozen prompt. It does not open a new design menu.
-It is still exploratory: `world_freeze_bar_met` remains false, and world
-parameters stay at the 0.5.1 lock.
+The 100-in-10k run is one extra pass of steps 5–6 after a kept round (including
+after round 7, or after an early stop). It uses that round’s kept version
+`V_k`, not automatically the later full-interface version `V*`. It does not
+open a new design menu. It is still exploratory: `world_freeze_bar_met`
+remains false. Do not retune world parameters from it. The current world
+string is 0.6.0. A 100-in-10k diary is not the protocol §5 result unless that
+`V_k` is already `V*` and the run is filed as the §5 small-population check.
 
 ## Adapter behavior
 
@@ -333,7 +336,7 @@ parameters stay at the 0.5.1 lock.
   add fields the note omits. `person_id` is `p_` plus the participant id.
   `at` is local time on the synthetic clock. Grocery and money fields copy
   the observation’s grocery, price, balance, and cash figures. `store_stock`
-  is the shop stock report. `at_home` is local presence. The unassisted log
+  is the shop stock report. `at_home` is the observation’s `at_home` (at the residence, not merely in the region). The unassisted log
   is the scripted twin in the same records. The export note does not say so.
 - Latency is the tool’s own delay when the assistant sets one; otherwise a
   small default in the same range the scripted policy already uses for
@@ -345,12 +348,86 @@ parameters stay at the 0.5.1 lock.
 - The model sees one user per call. No cache keyed across users that would
   copy one household’s facts into another call.
 
-## What stays deferred
+## Which version is which
 
-The scored adoption sweep (0% through 100%, preregistered outcomes, conditions
-C–K) waits on the full world freeze bar. This plan does not choose those
-outcomes and does not read them back into Porter.
+Each kept round is a version `V_k`: that round’s `prompt.md` hash, that
+round’s `MENU.md`, the model id, and the adapter. A round that fails the
+diary rule is discarded. Discarded versions are not evaluated under protocol
+§5 and are not rolled out.
 
-The exploratory 10k pilot on seeds 9091–9094 starts only from a prompt this
-loop has frozen, and only when that run is requested. Design seeds stay off
-that list.
+`V*` is the last kept version whose menu is the **full ordinary action
+interface** (the tool table in this plan: groceries, medicine, bills,
+commute, clinic, messages, relocation). Intermediate versions are narrower
+on purpose. Round 0 groceries is `V_0`, not `V*`.
+
+| Activity | Version | What the check is |
+|----------|---------|-------------------|
+| Diary keep/drop inside a design round | The candidate for that round only | Did the new menu task complete without making earlier personal rows worse? |
+| 100-in-10k during design | Whichever `V_k` the loop has frozen so far | Exploratory scale of that menu. Not §5, even if the shape is 100 users. |
+| Protocol §5 isolated and small-population | **`V*` only** | Competence of the policy that adoption will deploy. |
+| Adoption sweep, conditions C–K | **The same `V*` bytes** | Treatment is replacement fraction, not a newer prompt. |
+
+If §5 fails, edit the prompt in a new design round, keep it only if the diary
+rule passes, and call that `V*_next`. §5 runs again on `V*_next`. Phase 3
+never starts on a version §5 did not accept. Phase 3 never swaps in `V_0` or
+any mid-ladder menu.
+
+## Three phases (do not collapse them)
+
+1. **Prompt design (rounds 0–7).** Build `V_0` … toward `V*`. One pilot cell,
+   ten users, personal diaries, design seeds, never 9091–9094. The packet
+   must not name the hypothesis or city totals. The optional 100-in-10k run
+   uses the latest kept `V_k` and stays exploratory.
+2. **§5 on `V*`.** Only after a kept round whose menu is the full ordinary
+   interface. Design seeds, scripted neighbors. Passing §5 freezes `V*`.
+   No new menu item after that freeze.
+3. **Protocol rollout of that frozen `V*`.** After the world freeze bar and a
+   preregistration that names the simulator version, the `V*` hash, the
+   0–100% schedule, conditions C–K, and the primary outcomes. Held-out seeds
+   9091–9094 are first used here. Do not read scored outcomes back into
+   `prompt.md`.
+
+## §5 individual evaluation (this is `V*` only)
+
+Protocol §5 is not the blinded packet review and not the per-round diary
+rule. Those already ran on each `V_k`. §5 does not re-score `V_0` or a
+grocery-only prompt.
+
+- **Isolated:** one household on `V*`, scripted rest of a small population,
+  several design seeds, routine plus one power disturbance and one road
+  closure. Score only that household.
+- **Small population:** 100 cell members on **`V*`**, everyone else scripted,
+  design seeds, 10k households. A 100-in-10k diary from an earlier `V_k` does
+  not count. Held-out 9091–9094 stay unused until phase 3.
+- **Checklist** (report, do not require perfection): food, medicine, bills,
+  and shifts against the scripted twin; engine rejections; `message` claims
+  that contradict `tool_replies`; no fields outside the export; a human read
+  of sampled transcripts.
+- **Freeze:** the preregistration records `V*` (model id, `prompt.md` hash,
+  full menu, adapter version). Phase 3 loads those bytes. A failed checklist
+  produces `V*_next` via the diary rule, then a new §5, not an edit after
+  phase-3 results.
+
+## Candidate primary outcomes (phase 3, not yet frozen)
+
+These are candidates for the preregistration’s small primary set. They are
+simulator snapshot fields already produced under scripted Columbus runs
+(`snapshot()` / validation battery). They are **not** Porter diary columns
+and must not be copied into the worker packet.
+
+| Candidate | Snapshot field | Protocol §10 bucket | Why this one |
+|-----------|----------------|---------------------|--------------|
+| Unmet food | `unmet_grocery_units` | Unmet essential demand | End-of-run household shortfall vs daily need. Already reported on routine and shock cells. Medicine shortfall (`unmet_medicine_units`) stays secondary unless the menu includes pharmacy. |
+| Outage exposure | `power_unserved_household_hours` | Duration and population exposure | Household-hours below the power rank, not a single peak count. Peak (`power_unserved_households_peak`) is a secondary descriptor. |
+| Missed card payments | `payment_failures` | Essential payments | Sales that did not settle. `liquidity_delays` is the interbank queue, secondary. |
+| Undelivered freight | `logistics_delays` | Essential deliveries | Already the transport→freight direction check. Not a Columbus magnitude. |
+| Spoiled groceries | `grocery_spoiled_units` | Physical resource loss | Refrigeration loss after outage. Do not treat a price or a stockout count alone as harm. |
+
+Report each as an aggregate and as a distribution across households where the
+trace supports it. `water_unmet_m3` is a weak primary: the water model is a
+scalar and often zero in current runs. Restoration time is not a single
+snapshot field; if it is promoted later, define it from shock start to
+`power_unserved_households_last == 0` before any AI run.
+
+Freezing this list is a preregistration edit, not a world-parameter edit.
+Until that file exists, these rows are proposals only.

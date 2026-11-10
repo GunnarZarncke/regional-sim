@@ -6,4 +6,4 @@ Menu tools for this round are only the ones in MENU.md. Grocery charges use the 
 There are no user-test diaries yet.
 Keep a task only if the assistant finishes it when it comes up and the person is not worse off on food or the connected account.
 Note what you changed in NOTES.md.
-Pilot segment: people who leave home for work and live in the same neighborhood.
+Pilot segment: employed onsite workers in one Columbus-area pilot cell (America/New_York). Each person has their own store assignment; stock is not shared across homes.

@@ -2,7 +2,7 @@
 
 ## Open work
 
-- **Porter packet:** Align `drafts/porter-packet/docs/context_export.md` with `at_home`, async tool replies, and `electronic_only` buy payload. Round 0 when asked. Plan: [`ai-agent-prototype-plan.md`](ai-agent-prototype-plan.md).
+- **Porter packet:** Adapter maps engine `Observation` to export v1 and uses `electronic_only` on buy. Round 0 when asked. Plan: [`ai-agent-prototype-plan.md`](ai-agent-prototype-plan.md).
 - **Later:** exploratory 10k pilot on held-out seeds 9091–9094, only from a prompt that loop has frozen.
 - Full **world freeze bar** (magnitudes, heterogeneity, held-out Columbus) remains unmet. Scored protocol waits on it.
 

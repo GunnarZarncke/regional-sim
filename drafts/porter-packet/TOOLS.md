@@ -1,32 +1,41 @@
 # Tools
 
-The app carries out only the tools on the current menu. Any other call is ignored and not performed. The person hears about that only if the assistant says so in `message` (`REPLY.md`).
+The app queues only the tools on the current menu. Any other call is ignored. The person hears about that only if the assistant says so in `message` (`REPLY.md`).
 
-Numbers in a call or a reply use the turn record in `docs/context_export.md`. The data desk fills those numbers. The assistant does not measure them.
+Numbers and time use the turn record in `docs/context_export.md`. The data desk fills them. The assistant does not measure them.
 
-`check_store` asks whether the person’s usual store currently has groceries. It does not buy anything.
+**Async.** Tool calls do not return in the same turn. Outcomes appear in `tool_replies` on a **later** turn record, each with a `call_id`. Read those before acting. See `docs/context_export.md`.
 
-- Reply `{ "store_stock": 12.0 }` is bundles the partner reports right now.
-- Reply `{ "error": "store_unreachable" }` means the partner did not answer. Stock stays unknown. Do not treat it as empty or as full.
+`check_store` asks this person’s assigned partner how many grocery bundles they report right now. It does not buy anything.
 
-`buy_groceries` asks the partner to sell bundles to this person and charge the connected account.
+- When a reply arrives: `{ "call_id": "…", "tool": "check_store", "store_stock": 12.0 }`.
+- Or `{ "call_id": "…", "tool": "check_store", "error": "store_unreachable" }`. Stock stays unknown. Do not treat unreachable as empty or as full.
 
-- `amount`: bundles to buy. Fractions are allowed. A request uses the price on the turn record. Do not ask for more than the next few days unless the person asked.
-- `delay_hours`: hours from now until the attempt. The partner is open from 08:00 up to 22:00 local. An attempt at 22:00 or later is closed. If the store is closed now, set the delay so the attempt falls inside those hours.
+`buy_groceries` asks the partner to sell bundles to this household and charge the connected account when the attempt runs.
 
-The charge is attempted on the connected account when the attempt runs. The app does not take money the person keeps at home. If the connected account cannot cover the sale, the attempt is refused.
+- `amount`: household bundles to buy. Fractions are allowed. Use `price_cents` on the record for cost.
+- `delay_hours`: hours from the record’s `at` until the attempt, in `timezone`.
 
-The partner checks the home geofence when the attempt runs, not when the assistant sends the call. `at_home` on the current record is only the present moment. People in this pilot leave home for work, so a delay that lands during the work day can be refused even though they were home when the assistant asked.
+The charge is electronic on the connected account at attempt time. Money kept at home is never taken. Attempts run only from 08:00 up to 22:00 in `timezone`.
 
-While `grocery_order_pending` is true, do not send another `buy_groceries`.
+The partner reads `at_home` at **attempt** time, not when the call is queued. `at_home` on the current record is only the present moment. People in this pilot leave home for work, so a delay that lands during the workday can be refused even if they were home when the assistant queued the call.
 
-A refusal ends that attempt. Do not invent a receipt. Reasons:
+While `grocery_order_pending` is true, do not queue another `buy_groceries`.
+
+When a reply arrives, it is one of:
+
+- `{ "call_id": "…", "tool": "buy_groceries", "status": "accepted", "bundles": 1.5 }`.
+- `{ "call_id": "…", "tool": "buy_groceries", "status": "refused", "reason": "<reason>" }`.
+
+Reasons for refusal:
 
 - `cannot_pay`. At attempt time the connected account cannot cover the bundles being sold. Nothing is handed over.
-- `out_of_stock`. At attempt time the partner has none of the bundles. Nothing is charged. If the partner has some but not all, the reply is `accepted` with `bundles` set to the amount sold, and the connected account is charged for that amount only.
-- `not_home`. At attempt time the home geofence says the person is away. The purchase does not happen. This can happen to a delayed attempt that was sent while they were home.
-- `store_closed`. The attempt time is before 08:00 or at or after 22:00 local. Nothing is charged.
+- `out_of_stock`. At attempt time the partner has none of the bundles. Nothing is charged. If the partner has some but not all, the reply is `accepted` with `bundles` less than requested, and the account is charged only for `bundles`.
+- `not_home`. At attempt time `at_home` was false. Nothing is charged.
+- `store_closed`. The attempt time is before 08:00 or at or after 22:00 in `timezone`. Nothing is charged.
 
-`wait` does nothing this turn. Use it when no call is needed. It has no reply.
+Do not invent a receipt.
 
-The assistant never spends money the connected account does not have, never shops for someone else, and never claims a purchase the partner did not accept.
+`wait` does nothing this turn. Use it when no call is needed. It has no reply and no `call_id`.
+
+The assistant never charges more than the connected account can cover, never shops for someone else, and never claims a purchase that did not appear as an `accepted` reply for that `call_id`. Stock at one partner does not reflect other households; each pilot user has a separate assignment.
